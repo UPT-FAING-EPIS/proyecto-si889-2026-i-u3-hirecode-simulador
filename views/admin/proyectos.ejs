@@ -1,0 +1,243 @@
+<%- include('../partials/head') %>
+
+<div class="app-wrapper">
+  <%- include('../partials/sidebar', { user, roles }) %>
+
+  <div class="main-content">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <button id="sidebar-toggle" class="btn btn-ghost btn-icon" aria-label="Abrir menú">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div class="topbar-left">
+        <span class="topbar-title">Gestion de Proyectos</span>
+      </div>
+      <div class="topbar-right">
+        <a href="/admin/proyectos/nuevo" class="btn btn-primary btn-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nuevo Proyecto
+        </a>
+        <span class="badge-role"><%= user.rol %></span>
+      </div>
+    </header>
+
+    <div class="page-container">
+
+      <!-- Stats rápidas -->
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px;">
+        <%
+          const totProyectos = proyectos.length;
+          const activos = proyectos.filter(p => p.estado === 'Activo').length;
+          const cerrados = proyectos.filter(p => p.estado === 'Cerrado').length;
+          const pausados = proyectos.filter(p => p.estado === 'Pausado').length;
+        %>
+        <div class="stat-card">
+          <div class="stat-value text-accent"><%= totProyectos %></div>
+          <div class="stat-label">Total Proyectos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--text-accent);"><%= activos %></div>
+          <div class="stat-label">Activos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--text-success);"><%= cerrados %></div>
+          <div class="stat-label">Cerrados</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--text-warning);"><%= pausados %></div>
+          <div class="stat-label">Pausados</div>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="card" style="margin-bottom:16px; padding:10px 14px;">
+        <form method="GET" action="/admin/proyectos" style="display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap;">
+          <div>
+            <label class="form-label" style="margin-bottom:4px; display:block;">Buscar</label>
+            <input type="text" name="busqueda" class="form-control" placeholder="Buscar proyecto..." value="<%= filtros.busqueda || '' %>" style="width:200px; margin:0;" />
+          </div>
+          <div>
+            <label class="form-label" style="margin-bottom:4px; display:block;">Estado</label>
+            <select name="estado" class="form-control" style="margin:0;">
+              <option value="">Todos los estados</option>
+              <% estadosProyecto.forEach(e => { %>
+              <option value="<%= e %>" <%= filtros.estado === e ? 'selected' : '' %>><%= e %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div>
+            <label class="form-label" style="margin-bottom:4px; display:block;">Metodologia</label>
+            <select name="metodologia" class="form-control" style="margin:0;">
+              <option value="">Todas las metodologias</option>
+              <% metodologias.forEach(m => { %>
+              <option value="<%= m.id_metodologia %>" <%= String(filtros.metodologia) === String(m.id_metodologia) ? 'selected' : '' %>><%= m.nombre %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div style="display:flex; gap:6px; align-self:flex-end;">
+            <button type="submit" class="btn btn-secondary btn-sm">Filtrar</button>
+            <a href="/admin/proyectos" class="btn btn-ghost btn-sm">Limpiar</a>
+          </div>
+        </form>
+      </div>
+
+      <!-- Proyectos -->
+      <% if (proyectos.length === 0) { %>
+      <div class="card" style="text-align:center; padding:40px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 12px; display:block; color:var(--text-muted); opacity:0.5;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <h3 style="margin-bottom:6px; font-size:14px; font-weight:500;">No se encontraron proyectos</h3>
+        <p style="color:var(--text-muted); font-size:12px; margin-bottom:16px;">Intenta cambiar los filtros o crea un nuevo proyecto.</p>
+        <a href="/admin/proyectos/nuevo" class="btn btn-primary btn-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Crear Primer Proyecto
+        </a>
+      </div>
+      <% } else { %>
+      <div class="proyectos-grid">
+        <% proyectos.forEach(p => {
+          let badgeClass = 'badge-slate';
+          let accentColor = 'var(--border-strong)';
+          if (p.estado === 'Activo') { badgeClass = 'badge-blue'; accentColor = 'var(--border-accent)'; }
+          else if (p.estado === 'Cerrado') { badgeClass = 'badge-green'; accentColor = 'var(--border-success)'; }
+          else if (p.estado === 'Pausado') { badgeClass = 'badge-yellow'; accentColor = 'var(--border-warning)'; }
+          else if (p.estado === 'Cancelado') { badgeClass = 'badge-red'; accentColor = 'var(--border-danger)'; }
+
+          const avance = parseFloat(p.promedio_avance || 0);
+        %>
+        <div class="proyecto-card" style="cursor: default; border-left: 2px solid <%= accentColor %>;">
+          <!-- Header -->
+          <div class="proyecto-card-header">
+            <div>
+              <div class="proyecto-card-title"><%= p.nombre %></div>
+              <div style="font-size:11px; color:var(--text-muted); display:flex; align-items:center; gap:4px; flex-wrap:wrap; margin-top:4px;">
+                <span>ID: <span class="font-mono"><%= p.id_proyecto %></span></span>
+                <% if (p.github_repo) { %>
+                <span>·</span>
+                <a href="https://github.com/<%= p.github_repo %>" target="_blank" class="badge badge-green" style="font-size:10px; text-decoration:none;" title="Ver repositorio en GitHub">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+                  <%= p.github_repo %>
+                </a>
+                <% } %>
+              </div>
+            </div>
+            <span class="estado-badge estado-<%= p.estado.replace(/\s+/g,'') %>"><%= p.estado %></span>
+          </div>
+
+          <!-- Descripción -->
+          <p class="proyecto-card-desc"><%= p.descripcion || 'Sin descripción.' %></p>
+
+          <!-- Barra de avance del proyecto (global) -->
+          <div class="progreso-label">
+            <span>Avance global del proyecto</span>
+            <strong><%= avance %>%</strong>
+          </div>
+          <div class="progress-bar-outer" style="margin-bottom: 8px;">
+            <div class="progress-bar-inner" style="width:<%= avance %>%"></div>
+          </div>
+
+          <!-- Metadatos de la tarjeta -->
+          <div class="proyecto-card-meta">
+            <% if (p.fecha_inicio) { %>
+            <span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <%= new Date(p.fecha_inicio).toLocaleDateString('es-PE') %>
+            </span>
+            <% } %>
+            <% if (p.fecha_fin) { %>
+            <span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              <%= new Date(p.fecha_fin).toLocaleDateString('es-PE') %>
+            </span>
+            <% } %>
+            <span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+              <%= p.total_actividades || 0 %> actividades
+            </span>
+            <% if (p.metodologia_nombre) { %>
+            <span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              <%= p.metodologia_nombre %>
+            </span>
+            <% } %>
+          </div>
+
+          <!-- Acciones -->
+          <div style="display:flex; gap:6px; align-items:center; padding-top:10px; border-top:0.5px solid var(--border); margin-top:8px;">
+            <a href="/admin/proyectos/<%= p.id_proyecto %>/config" class="btn btn-secondary btn-sm" style="flex:1; justify-content:center;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              Configurar
+            </a>
+            <% if (p.total_actividades > 0) { %>
+            <button class="btn btn-ghost btn-sm btn-icon" disabled title="No se puede editar: el cronograma ya tiene actividades" style="opacity:0.4; cursor:not-allowed;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <% } else { %>
+            <a href="/admin/proyectos/<%= p.id_proyecto %>/editar" class="btn btn-ghost btn-sm btn-icon" title="Editar proyecto">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </a>
+            <% } %>
+            <button class="btn btn-danger btn-sm btn-icon" onclick="confirmarEliminar(<%= p.id_proyecto %>, '<%= p.nombre.replace(/'/g, "\\'") %>')" title="Eliminar">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </button>
+          </div>
+        </div>
+        <% }) %>
+      </div>
+      <% } %>
+
+    </div><!-- /page-container -->
+
+    <%- include('../partials/footer') %>
+  </div><!-- /main-content -->
+</div><!-- /app-wrapper -->
+
+<!-- MODAL CONFIRMAR ELIMINACIÓN -->
+<div class="modal-overlay" id="modal-eliminar">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <span class="modal-title" style="color:var(--text-danger);">Eliminar Proyecto</span>
+      <button class="modal-close" onclick="closeModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <p style="color:var(--text-secondary); margin-bottom:14px; font-size:13px;">
+      Eliminar el proyecto <strong id="proj-nombre-del" style="color:var(--text-primary);"></strong>? Esta accion es permanente y eliminara todos los datos asociados.
+    </p>
+    <div id="error-del" style="display:none;" class="alert alert-error"></div>
+    <div style="display:flex; gap:8px; justify-content:flex-end;">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-danger btn-sm" id="btn-del">Eliminar Proyecto</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function closeModal() {
+    document.getElementById('modal-eliminar').classList.remove('open');
+  }
+  let delId = null;
+  function confirmarEliminar(id, nombre) {
+    delId = id;
+    document.getElementById('proj-nombre-del').textContent = nombre;
+    document.getElementById('error-del').style.display = 'none';
+    document.getElementById('modal-eliminar').classList.add('open');
+  }
+  document.getElementById('btn-del').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-del');
+    const errEl = document.getElementById('error-del');
+    btn.textContent = 'Eliminando...'; btn.disabled = true;
+    try {
+      const res = await fetch(`/api/admin/proyectos/${delId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al eliminar');
+      location.reload();
+    } catch(err) {
+      errEl.textContent = err.message; errEl.style.display = 'flex';
+      btn.textContent = 'Eliminar Proyecto'; btn.disabled = false;
+    }
+  });
+  document.getElementById('modal-eliminar').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal();
+  });
+</script>

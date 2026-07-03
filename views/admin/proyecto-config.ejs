@@ -1,0 +1,2111 @@
+<%- include('../partials/head') %>
+
+<style>
+  /* ─── TABS ───────────────────────────────────────────────────────────────── */
+  .tabs-nav {
+    display: flex;
+    gap: 0.25rem;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 1rem;
+    overflow-x: auto;
+  }
+  .tab-btn {
+    padding: 0.6rem 1.1rem;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+    font-family: var(--font-sans);
+  }
+  .tab-btn:hover { color: var(--text-primary); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ─── PROGRESS ───────────────────────────────────────────────────────────── */
+  .prog-bar-lg {
+    height: 10px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin-top: 0.4rem;
+  }
+  .prog-bar-fill {
+    height: 100%;
+    border-radius: var(--radius-full);
+    transition: width 1s ease;
+    background: var(--accent);
+  }
+
+  /* ─── ACCORDION ──────────────────────────────────────────────────────────── */
+  .accordion-item { border: 1px solid var(--border-subtle); border-radius: var(--radius-md); margin-bottom: 0.4rem; overflow: hidden; }
+  .accordion-header { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0.9rem; cursor: pointer; background: var(--bg-tertiary); transition: background var(--transition-fast); }
+  .accordion-header:hover { background: var(--bg-hover); }
+  .accordion-body { padding: 0.75rem 0.9rem; background: var(--bg-secondary); display: none; }
+  .accordion-body.open { display: block; }
+
+  /* ─── MEMBER CARD ─────────────────────────────────────────────────────────── */
+  .member-item {
+    display: flex; align-items: center; gap: 0.65rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-tertiary);
+    transition: all var(--transition-fast);
+  }
+  .member-item:hover { border-color: var(--border-default); background: var(--bg-hover); }
+
+  /* ─── ACTIVITY ROW ──────────────────────────────────────────────────────── */
+  .activity-row td { vertical-align: middle; }
+
+  /* ─── CALENDARIO MENSUAL DE CRONOGRAMA ───────────────────────────────────── */
+  .cronograma-calendar-container {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+  .calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1.25rem;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .calendar-grid-header {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-subtle);
+    font-weight: 600;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    text-align: center;
+  }
+  .calendar-grid-header div {
+    padding: 0.5rem 0;
+  }
+  .calendar-grid-body {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    background: var(--bg-primary);
+  }
+  .calendar-cell {
+    border-right: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-subtle);
+    min-height: 70px;
+    padding: 0.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    position: relative;
+    background: var(--bg-primary);
+    transition: background 0.15s;
+    cursor: cell;
+  }
+  .calendar-cell:hover {
+    background: var(--bg-hover, rgba(99, 102, 241, 0.02));
+  }
+  .calendar-cell:nth-child(7n) {
+    border-right: none;
+  }
+  .calendar-cell.other-month {
+    background: var(--bg-tertiary);
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  .calendar-cell.today-cell {
+    background: rgba(var(--accent-rgb,99,102,241), 0.03);
+  }
+  .calendar-day-num {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 0.15rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+  }
+  .calendar-cell.today-cell .calendar-day-num {
+    background: var(--accent);
+    color: #fff;
+  }
+  .calendar-event {
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.15rem 0.35rem;
+    border-radius: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: transform 0.1s;
+  }
+  .calendar-event:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+  }
+  .calendar-btn {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    height: 28px;
+  }
+  .calendar-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-default);
+  }
+  .calendar-btn-nav {
+    width: 28px;
+    padding: 0;
+    font-size: 0.95rem;
+  }
+  .event-completado {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+    border-color: rgba(16, 185, 129, 0.25);
+  }
+  .event-progreso {
+    background: rgba(59, 130, 246, 0.12);
+    color: #3b82f6;
+    border-color: rgba(59, 130, 246, 0.25);
+  }
+  .event-pendiente {
+    background: rgba(100, 116, 139, 0.12);
+    color: #64748b;
+    border-color: rgba(100, 116, 139, 0.25);
+  }
+  .event-bloqueado {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.25);
+  }
+</style>
+
+<div class="app-wrapper">
+  <%- include('../partials/sidebar', { user, roles }) %>
+
+  <div class="main-content">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <button id="sidebar-toggle" class="btn btn-ghost btn-icon" aria-label="Abrir menú">☰</button>
+      <div class="topbar-title" style="display:flex; align-items:center; gap:0.5rem;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Configurar: <span style="color:var(--accent);"><%= proyecto.nombre %></span>
+      </div>
+      <div class="topbar-actions" style="display:flex; align-items:center; gap:0.5rem;">
+        <% if (proyecto.github_repo) { %>
+        <a href="https://github.com/<%= proyecto.github_repo %>" target="_blank" class="badge badge-teal" style="display:inline-flex; align-items:center; gap:0.25rem; background:#0d9488; color:white; text-decoration:none; padding: 0.25rem 0.5rem;" title="Ver repositorio en GitHub">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg> GitHub
+        </a>
+        <% } %>
+        <span class="badge
+          <% if (proyecto.estado === 'Activo') { %>badge-blue<% } else if (proyecto.estado === 'Cerrado') { %>badge-green<% } else if (proyecto.estado === 'Pausado') { %>badge-yellow<% } else { %>badge-slate<% } %>
+        "><%= proyecto.estado %></span>
+        <a href="/admin/proyectos" class="btn btn-ghost btn-sm">← Volver</a>
+        <% if (resumenCronograma.total > 0) { %>
+        <button class="btn btn-secondary btn-sm" disabled title="No se puede editar: el cronograma ya tiene actividades" style="opacity:0.45; cursor:not-allowed; display:inline-flex; align-items:center; gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Editar</button>
+        <% } else { %>
+        <a href="/admin/proyectos/<%= proyecto.id_proyecto %>/editar" class="btn btn-secondary btn-sm" style="display:inline-flex; align-items:center; gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Editar</a>
+        <% } %>
+      </div>
+    </header>
+
+    <div class="page-container">
+
+      <!-- ─── RESUMEN CRONOGRAMA STATS ────────────────────────────────────── -->
+      <div class="stats-grid" style="grid-template-columns:repeat(5,1fr); gap:0.6rem; margin-bottom:1rem;">
+        <div class="stat-card">
+          <div class="stat-card-glow" style="background:var(--accent);"></div>
+          <div class="stat-value text-accent"><%= parseFloat(resumenCronograma.promedio || 0).toFixed(1) %>%</div>
+          <div class="stat-label">Avance Global</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-glow" style="background:var(--blue);"></div>
+          <div class="stat-value" style="color:var(--blue);"><%= resumenCronograma.total %></div>
+          <div class="stat-label">Actividades</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-glow" style="background:var(--teal);"></div>
+          <div class="stat-value" style="color:var(--teal);"><%= resumenCronograma.completadas %></div>
+          <div class="stat-label">Completadas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-glow" style="background:var(--yellow);"></div>
+          <div class="stat-value" style="color:var(--yellow);"><%= resumenCronograma.en_progreso %></div>
+          <div class="stat-label">En Progreso</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-glow" style="background:var(--red);"></div>
+          <div class="stat-value" style="color:var(--red);"><%= resumenCronograma.bloqueadas %></div>
+          <div class="stat-label">Bloqueadas</div>
+        </div>
+      </div>
+
+      <!-- ─── TABS ─────────────────────────────────────────────────────────── -->
+      <div class="tabs-nav">
+        <button id="btn-tab-info" class="tab-btn active" onclick="switchTab('tab-info', this)" style="display:inline-flex; align-items:center; gap:0.35rem;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> Información General</button>
+        <button id="btn-tab-equipo" class="tab-btn" onclick="switchTab('tab-equipo', this)" style="display:inline-flex; align-items:center; gap:0.35rem;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Equipo</button>
+        <button id="btn-tab-cronograma" class="tab-btn" onclick="switchTab('tab-cronograma', this)" style="display:inline-flex; align-items:center; gap:0.35rem;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Cronograma</button>
+        <button id="btn-tab-tickets" class="tab-btn" onclick="switchTab('tab-tickets', this)" style="display:inline-flex; align-items:center; gap:0.35rem;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="6" y1="9" x2="6" y2="15"/><line x1="18" y1="9" x2="18" y2="15"/><line x1="10" y1="12" x2="14" y2="12"/></svg> Tickets</button>
+        <button id="btn-tab-metodologia" class="tab-btn" onclick="switchTab('tab-metodologia', this)" style="display:inline-flex; align-items:center; gap:0.35rem;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> Metodología</button>
+        <button id="btn-tab-ranking" class="tab-btn" onclick="switchTab('tab-ranking', this)" style="display:inline-flex; align-items:center; gap:0.35rem;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6m12 5h1.5a2.5 2.5 0 0 0 0-5H18M12 22h.01M12 14c-1.66 0-3-1.34-3-3V4h6v7c0 1.66-1.34 3-3 3z"/></svg> Ranking</button>
+      </div>
+
+      <!-- ════════════════════ TAB: INFORMACIÓN GENERAL ════════════════════ -->
+      <div id="tab-info" class="tab-panel active">
+        <div class="grid-2" style="gap:0.75rem;">
+
+          <!-- Info del proyecto -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title" style="display:flex; align-items:center; gap:0.4rem;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> Datos del Proyecto</span>
+              <% if (resumenCronograma.total > 0) { %>
+              <button class="btn btn-ghost btn-sm" disabled title="No se puede editar: el cronograma ya tiene actividades" style="opacity:0.4; cursor:not-allowed; display:inline-flex; align-items:center; gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Editar</button>
+              <% } else { %>
+              <a href="/admin/proyectos/<%= proyecto.id_proyecto %>/editar" class="btn btn-ghost btn-sm" style="display:inline-flex; align-items:center; gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Editar</a>
+              <% } %>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.75rem;">
+              <div>
+                <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.2rem;">Nombre</div>
+                <div style="font-size:0.9rem; font-weight:600; color:var(--text-primary);"><%= proyecto.nombre %></div>
+              </div>
+              <% if (proyecto.descripcion) { %>
+              <div>
+                <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.2rem;">Descripción</div>
+                <div style="font-size:0.83rem; color:var(--text-secondary); line-height:1.6;"><%= proyecto.descripcion %></div>
+              </div>
+              <% } %>
+              <div class="grid-2" style="gap:0.65rem;">
+                <div>
+                  <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.2rem;">Estado</div>
+                  <span class="badge
+                    <% if (proyecto.estado === 'Activo') { %>badge-blue<% } else if (proyecto.estado === 'Cerrado') { %>badge-green<% } else if (proyecto.estado === 'Pausado') { %>badge-yellow<% } else { %>badge-slate<% } %>
+                  "><%= proyecto.estado %></span>
+                </div>
+                <div>
+                  <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.2rem;">Metodología</div>
+                  <div style="font-size:0.83rem; color:var(--text-secondary);"><%= proyecto.metodologia_nombre || 'Sin asignar' %></div>
+                </div>
+                <% if (proyecto.fecha_inicio) { %>
+                <div>
+                  <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.2rem;">Fecha Inicio</div>
+                  <div style="font-size:0.83rem; color:var(--text-secondary); display:inline-flex; align-items:center; gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> <%= new Date(proyecto.fecha_inicio).toLocaleDateString('es-MX', {day:'2-digit',month:'long',year:'numeric'}) %></div>
+                </div>
+                <% } %>
+                <% if (proyecto.fecha_fin) { %>
+                <div>
+                  <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.2rem;">Fecha Fin</div>
+                  <div style="font-size:0.83rem; color:var(--text-secondary);">🏁 <%= new Date(proyecto.fecha_fin).toLocaleDateString('es-MX', {day:'2-digit',month:'long',year:'numeric'}) %></div>
+                </div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+
+          <!-- Avance global -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title" style="display:flex; align-items:center; gap:0.4rem;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Avance del Proyecto</span>
+              <span style="font-size:1.5rem; font-weight:800; color:var(--accent);"><%= parseFloat(resumenCronograma.promedio || 0).toFixed(1) %>%</span>
+            </div>
+            <div class="prog-bar-lg" style="margin-bottom:1rem;">
+              <div class="prog-bar-fill" style="width:<%= parseFloat(resumenCronograma.promedio || 0).toFixed(1) %>%; background: <%= parseFloat(resumenCronograma.promedio || 0) >= 80 ? 'var(--accent)' : parseFloat(resumenCronograma.promedio || 0) >= 50 ? 'var(--blue)' : 'var(--orange)' %>;"></div>
+            </div>
+            <!-- Distribución por estado de actividad -->
+            <div style="display:flex; flex-direction:column; gap:0.45rem; font-size:0.8rem;">
+              <% const actDist = [
+                { label: 'Completadas', count: resumenCronograma.completadas, color: 'var(--accent)', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent);"><polyline points="20 6 9 17 4 12"/></svg>' },
+                { label: 'En Progreso', count: resumenCronograma.en_progreso, color: 'var(--blue)', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--blue);"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' },
+                { label: 'Pendientes', count: resumenCronograma.pendientes, color: 'var(--yellow)', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--yellow);"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 12"/></svg>' },
+                { label: 'Bloqueadas', count: resumenCronograma.bloqueadas, color: 'var(--red)', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--red);"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>' },
+              ]; %>
+              <% actDist.forEach(d => { %>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="color:var(--text-secondary); display:inline-flex; align-items:center; gap:0.4rem;"><%- d.icon %> <%= d.label %></span>
+                <span style="font-weight:700; color:<%= d.color %>;"><%= d.count %></span>
+              </div>
+              <% }) %>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ════════════════════ TAB: EQUIPO ════════════════════════════════ -->
+      <div id="tab-equipo" class="tab-panel">
+        <div class="grid-2" style="gap:0.75rem;">
+
+          <!-- Equipo actual -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title" style="display:flex; align-items:center; gap:0.4rem;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Miembros del Equipo</span>
+              <div style="display:flex; gap:0.35rem;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="agregarEquipoPredeterminado()" title="Agregar miembros predefinidos con sus roles" style="display:inline-flex; align-items:center; gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Cargar Predefinidos</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="openModal('modal-agregar-miembro')" style="display:inline-flex; align-items:center; gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Agregar</button>
+              </div>
+            </div>
+
+            <% if (equipo.length === 0) { %>
+            <div style="text-align:center; padding:1.5rem; color:var(--text-muted);">
+              <div style="display:flex; justify-content:center; color:var(--text-muted); margin-bottom:0.5rem;"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+              <p style="font-size:0.85rem;">No hay miembros en el equipo aún</p>
+            </div>
+            <% } else { %>
+            <div style="display:flex; flex-direction:column; gap:0.4rem;" id="equipo-list">
+              <% equipo.forEach((m, idx) => {
+                const initials = m.nombre ? m.nombre.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase() : '?';
+                const medals = ['#1', '#2', '#3'];
+                const medal = idx < 3 ? `<span class="badge badge-accent" style="font-size:0.6rem; padding:0.15rem 0.3rem; margin-right:4px; font-weight:700;">${medals[idx]}</span>` : '';
+              %>
+              <div class="member-item">
+                <div style="width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,var(--purple),var(--blue)); display:flex; align-items:center; justify-content:center; font-size:0.68rem; font-weight:700; color:white; flex-shrink:0;">
+                  <%= initials %>
+                </div>
+                <div style="flex:1; min-width:0;">
+                  <div style="font-size:0.82rem; font-weight:600; color:var(--text-primary); display:flex; align-items:center;">
+                    <%- medal %> <%= m.nombre %>
+                  </div>
+                  <div style="font-size:0.7rem; color:var(--text-muted);"><%= m.correo %></div>
+                </div>
+                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.25rem;">
+                  <span class="badge badge-blue" style="font-size:0.62rem;"><%= m.rol_en_proyecto %></span>
+                  <span class="badge badge-slate" style="font-size:0.58rem;"><%= m.rol_global %></span>
+                </div>
+                <button class="btn btn-danger btn-sm btn-icon" onclick="removerMiembro(<%= m.id %>, '<%= m.nombre.replace(/'/g, "\\'") %>')" title="Remover del equipo" style="margin-left:0.25rem;">✕</button>
+              </div>
+              <% }) %>
+            </div>
+            <% } %>
+          </div>
+
+          <!-- Clientes del proyecto -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title" style="display:flex; align-items:center; gap:0.4rem;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Clientes / Stakeholders</span>
+              <div style="display:flex; gap:0.35rem;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="agregarClientesPredeterminados()" title="Agregar clientes predefinidos" style="display:inline-flex; align-items:center; gap:0.25rem; background:var(--bg-hover); border:1px solid var(--border-default); color:var(--text-secondary);"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Cargar Predefinidos</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="openModal('modal-agregar-cliente')" style="display:inline-flex; align-items:center; gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Agregar</button>
+              </div>
+            </div>
+            <% if (clientes.length === 0) { %>
+            <div style="text-align:center; padding:1.5rem; color:var(--text-muted);">
+              <div style="display:flex; justify-content:center; color:var(--text-muted); margin-bottom:0.5rem;"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+              <p style="font-size:0.85rem;">No hay clientes asociados</p>
+            </div>
+            <% } else { %>
+            <div style="display:flex; flex-direction:column; gap:0.4rem;">
+              <% clientes.forEach(c => {
+                const initials = c.nombre ? c.nombre.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase() : '?';
+              %>
+              <div class="member-item">
+                <div style="width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,var(--orange),var(--yellow)); display:flex; align-items:center; justify-content:center; font-size:0.68rem; font-weight:700; color:white; flex-shrink:0;">
+                  <%= initials %>
+                </div>
+                <div style="flex:1; min-width:0;">
+                  <div style="font-size:0.82rem; font-weight:600; color:var(--text-primary);"><%= c.nombre %></div>
+                  <div style="font-size:0.7rem; color:var(--text-muted);"><%= c.correo %></div>
+                </div>
+                <button class="btn btn-danger btn-sm btn-icon" onclick="removerCliente(<%= c.id %>, '<%= c.nombre.replace(/'/g, "\\'") %>')" title="Remover" style="margin-left:0.25rem;">✕</button>
+              </div>
+              <% }) %>
+            </div>
+            <% } %>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ════════════════════ TAB: CRONOGRAMA ════════════════════════════ -->
+      <div id="tab-cronograma" class="tab-panel">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title" style="display:flex; align-items:center; gap:0.4rem;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Actividades del Cronograma</span>
+            <div style="display:flex; gap:0.5rem;">
+              <button class="btn btn-primary btn-sm" onclick="abrirNuevaActividad()" style="display:inline-flex; align-items:center; gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Actividad</button>
+            </div>
+          </div>
+
+          <%
+          // Mostrar aviso si el proyecto no tiene cronograma pero llegó con error
+          const errorParam = typeof query !== 'undefined' && typeof req !== 'undefined' ? (req && req.query && req.query.error) : '';
+          %>
+          <% if (cronograma.length === 0) { %>
+          <div style="text-align:center; padding:2rem; color:var(--text-muted);">
+            <div style="display:flex; justify-content:center; color:var(--text-muted); margin-bottom:0.5rem;"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+            <p style="font-size:0.85rem;">No hay actividades en el cronograma</p>
+            <button class="btn btn-primary btn-sm" onclick="abrirNuevaActividad()" style="margin-top:0.75rem; display:inline-flex; align-items:center; gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Agregar Primera Actividad</button>
+          </div>
+          <% } else { %>
+
+          <!-- SUB-NAVEGACIÓN INTERNA DEL CRONOGRAMA -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:0.5rem; border-bottom:1px solid var(--border-subtle); padding-bottom:0.75rem; padding-left: 1.25rem; padding-right: 1.25rem;">
+            <div style="display:flex; gap:0.25rem; background:var(--bg-secondary); padding:0.25rem; border-radius:8px; border:1px solid var(--border-default);">
+              <button type="button" class="tab-btn active" id="subbtn-calendario" onclick="switchCronogramaView('calendario')" style="font-size:0.75rem; padding:0.4rem 0.85rem; border-radius:6px; border:none; background:transparent; font-weight:600; cursor:pointer; color:var(--accent); display:inline-flex; align-items:center; gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Calendario Grande</button>
+              <button type="button" class="tab-btn" id="subbtn-gantt" onclick="switchCronogramaView('gantt')" style="font-size:0.75rem; padding:0.4rem 0.85rem; border-radius:6px; border:none; background:transparent; font-weight:600; cursor:pointer; color:var(--text-muted); display:inline-flex; align-items:center; gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Línea de Tiempo (Gantt)</button>
+              <button type="button" class="tab-btn" id="subbtn-tabla" onclick="switchCronogramaView('tabla')" style="font-size:0.75rem; padding:0.4rem 0.85rem; border-radius:6px; border:none; background:transparent; font-weight:600; cursor:pointer; color:var(--text-muted); display:inline-flex; align-items:center; gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> Tabla Detallada</button>
+            </div>
+          </div>
+
+          <!-- 1. VISTA: CALENDARIO GRANDE -->
+          <div id="cview-calendario" style="display:block; padding: 0 1.25rem 1.25rem 1.25rem;">
+            <div style="background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.65rem 0.85rem; margin-bottom: 0.75rem; font-size: 0.78rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.5rem;">
+              <span style="display:inline-flex; align-items:center; color:var(--yellow);"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span>
+              <span><strong>Consejo:</strong> Haz clic en un día libre para <strong>crear una actividad</strong> en esa fecha, o haz clic en un bloque de tarea para <strong>editarla/eliminarla</strong>.</span>
+            </div>
+            <div class="cronograma-calendar-container">
+              <div class="calendar-header">
+                <button type="button" onclick="navigateCronogramaCalendar(-1)" class="calendar-btn calendar-btn-nav">‹</button>
+                <h3 id="cron-cal-titulo" style="font-weight:700; font-size:1rem; color:var(--text-primary); margin:0;"></h3>
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                  <button type="button" onclick="goTodayCronogramaCalendar()" class="calendar-btn">Hoy</button>
+                  <button type="button" onclick="navigateCronogramaCalendar(1)" class="calendar-btn calendar-btn-nav">›</button>
+                </div>
+              </div>
+              <div class="calendar-grid-header">
+                <div>Lunes</div>
+                <div>Martes</div>
+                <div>Miércoles</div>
+                <div>Jueves</div>
+                <div>Viernes</div>
+                <div>Sábado</div>
+                <div>Domingo</div>
+              </div>
+              <div id="cron-cal-grid" class="calendar-grid-body"></div>
+            </div>
+          </div>
+
+          <!-- 2. VISTA: DIAGRAMA DE GANTT -->
+          <div id="cview-gantt" style="display:none;">
+            <!-- DIAGRAMA DE GANTT -->
+            <%
+              // Rango de fechas
+              let minDate = null;
+              let maxDate = null;
+              cronograma.forEach(a => {
+                const s = new Date(a.fecha_inicio);
+                const f = new Date(a.fecha_fin);
+                if (!minDate || s < minDate) minDate = s;
+                if (!maxDate || f > maxDate) maxDate = f;
+              });
+
+              if (!minDate && proyecto.fecha_inicio) minDate = new Date(proyecto.fecha_inicio);
+              if (!maxDate && proyecto.fecha_fin) maxDate = new Date(proyecto.fecha_fin);
+              if (!minDate) minDate = new Date();
+              if (!maxDate) maxDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+              if (minDate.getTime() === maxDate.getTime()) {
+                maxDate = new Date(minDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+              }
+
+              const totalTime = maxDate.getTime() - minDate.getTime();
+
+              // Intervalos para labels
+              const intervals = 4;
+              const labels = [];
+              for (let i = 0; i <= intervals; i++) {
+                const dateVal = new Date(minDate.getTime() + (totalTime / intervals) * i);
+                labels.push(dateVal.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit' }));
+              }
+            %>
+            <div style="margin: 0 1.25rem 1.5rem 1.25rem; padding: 1.25rem; background: var(--bg-tertiary); border-radius: var(--radius-md); border: 1px solid var(--border-subtle); overflow-x: auto;">
+              <h4 style="font-size: 0.8rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent);"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Línea de Tiempo Visual (Gantt)
+              </h4>
+              
+              <!-- Escala de fechas -->
+              <div style="display: flex; align-items: center; gap: 1rem; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.4rem;">
+                <div style="width: 180px; font-weight: 700; flex-shrink: 0;">Actividad</div>
+                <div style="flex: 1; display: flex; justify-content: space-between; position: relative; padding: 0 4px;">
+                  <% labels.forEach(lbl => { %>
+                  <span style="display:inline-flex; align-items:center; gap:0.2rem;"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> <%= lbl %></span>
+                  <% }) %>
+                </div>
+              </div>
+
+              <!-- Listado de barras -->
+              <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+                <% cronograma.forEach(a => {
+                  const actStart = new Date(a.fecha_inicio);
+                  const actEnd = new Date(a.fecha_fin);
+                  
+                  const startVal = Math.max(minDate.getTime(), actStart.getTime());
+                  const endVal = Math.min(maxDate.getTime(), actEnd.getTime());
+                  
+                  const leftOffset = ((startVal - minDate.getTime()) / totalTime) * 100;
+                  const widthPct = Math.max(4, ((endVal - startVal) / totalTime) * 100);
+
+                  let colorBg = 'rgba(100, 116, 139, 0.15)';
+                  let colorBorder = '#64748b';
+                  let colorProgress = '#64748b';
+                  if (a.estado === 'Completado') {
+                    colorBg = 'rgba(16, 185, 129, 0.12)';
+                    colorBorder = '#10b981';
+                    colorProgress = '#10b981';
+                  } else if (a.estado === 'En Progreso') {
+                    colorBg = 'rgba(59, 130, 246, 0.12)';
+                    colorBorder = '#3b82f6';
+                    colorProgress = '#3b82f6';
+                  } else if (a.estado === 'Bloqueado') {
+                    colorBg = 'rgba(239, 68, 68, 0.12)';
+                    colorBorder = '#ef4444';
+                    colorProgress = '#ef4444';
+                  }
+                %>
+                <div style="display: flex; align-items: center; gap: 1rem; font-size: 0.75rem;">
+                  <div style="width: 180px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-secondary); flex-shrink: 0;" title="<%= a.nombre %>">
+                    <%= a.nombre %>
+                  </div>
+                  <div style="flex: 1; background: var(--bg-primary); height: 18px; border-radius: 4px; position: relative; border: 1px solid var(--border-subtle); overflow: hidden;">
+                    <!-- Gantt Bar -->
+                    <div style="position: absolute; left: <%= leftOffset %>%; width: <%= widthPct %>%; height: 100%; background: <%= colorBg %>; border-left: 3px solid <%= colorBorder %>; display: flex; align-items: center;">
+                      <!-- Inner progress fill -->
+                      <div style="width: <%= a.porcentaje_avance %>%; height: 100%; background: <%= colorProgress %>; opacity: 0.2;"></div>
+                      <!-- Label inside the row -->
+                      <span style="position: absolute; left: 8px; font-size: 0.62rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; pointer-events: none; text-shadow: 0 1px 1px var(--bg-tertiary);">
+                        <%= parseFloat(a.porcentaje_avance).toFixed(0) %>% · <%= a.asignado_nombre || 'Sin asignar' %>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <% }) %>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. VISTA: TABLA DETALLADA -->
+          <div id="cview-tabla" style="display:none; padding: 0 1.25rem 1.25rem 1.25rem;">
+            <div class="table-wrapper" style="border:none; background:transparent;">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Actividad</th>
+                    <th>Fase</th>
+                    <th>Responsable</th>
+                    <th>Fechas</th>
+                    <th>Estado</th>
+                    <th>Avance</th>
+                    <th style="text-align:right;">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% cronograma.forEach(a => {
+                    let estBadge = 'badge-slate';
+                    if (a.estado === 'Completado') estBadge = 'badge-green';
+                    else if (a.estado === 'En Progreso') estBadge = 'badge-blue';
+                    else if (a.estado === 'Bloqueado') estBadge = 'badge-red';
+                    else if (a.estado === 'Pendiente') estBadge = 'badge-yellow';
+                  %>
+                  <tr class="activity-row">
+                    <td>
+                      <div style="font-size:0.83rem; font-weight:600; color:var(--text-primary);">
+                        <%= a.nombre %>
+                        <% if (a.es_reportable) { %><span class="badge badge-teal" style="font-size:0.58rem; margin-left:0.3rem;">Reportable</span><% } %>
+                      </div>
+                      <% if (a.descripcion) { %>
+                      <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.1rem; max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><%= a.descripcion %></div>
+                      <% } %>
+                      <% if (a.entregable_ticket_id) { %>
+                      <div style="font-size:0.68rem; color:var(--accent); margin-top:0.15rem; display:inline-flex; align-items:center; gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="6" y1="9" x2="6" y2="15"/><line x1="18" y1="9" x2="18" y2="15"/><line x1="10" y1="12" x2="14" y2="12"/></svg> <%= a.entregable_ticket_id %> — <%= a.entregable_titulo ? a.entregable_titulo.substring(0,30) : '' %></div>
+                      <% } %>
+                    </td>
+                    <td style="font-size:0.78rem; color:var(--text-secondary);">
+                      <% if (a.etapa_nombre) { %><div style="font-size:0.68rem; color:var(--text-muted);"><%= a.etapa_nombre %></div><% } %>
+                      <%= a.fase_nombre || '—' %>
+                    </td>
+                    <td style="font-size:0.78rem;">
+                      <% if (a.asignado_nombre) { %>
+                      <div style="display:flex; align-items:center; gap:0.35rem;">
+                        <div style="width:24px; height:24px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-weight:700; color:white; flex-shrink:0;">
+                          <%= a.asignado_nombre.slice(0,2).toUpperCase() %>
+                        </div>
+                        <span style="color:var(--text-secondary);"><%= a.asignado_nombre.split(' ')[0] %></span>
+                      </div>
+                      <% } else { %>
+                      <span style="color:var(--text-muted);">—</span>
+                      <% } %>
+                    </td>
+                    <td style="font-size:0.75rem; color:var(--text-muted); white-space:nowrap;">
+                      <% if (a.fecha_inicio) { %><div style="display:inline-flex; align-items:center; gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> <%= new Date(a.fecha_inicio).toLocaleDateString('es-MX', {day:'2-digit',month:'short'}) %></div><% } %>
+                      <% if (a.fecha_fin) { %><div style="display:inline-flex; align-items:center; gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg> <%= new Date(a.fecha_fin).toLocaleDateString('es-MX', {day:'2-digit',month:'short'}) %></div><% } %>
+                    </td>
+                    <td><span class="badge <%= estBadge %>" style="font-size:0.65rem;"><%= a.estado %></span></td>
+                    <td style="min-width:100px;">
+                      <div style="display:flex; align-items:center; gap:0.4rem;">
+                        <div class="qa-bar" style="flex:1;">
+                          <div class="qa-bar-fill" style="width:<%= a.porcentaje_avance || 0 %>%;"></div>
+                        </div>
+                        <span style="font-size:0.72rem; font-weight:700; color:var(--accent); min-width:30px;"><%= a.porcentaje_avance || 0 %>%</span>
+                      </div>
+                    </td>
+                    <td style="text-align:right;">
+                      <div style="display:flex; gap:0.35rem; justify-content:flex-end;">
+                        <button class="btn btn-ghost btn-sm" onclick="abrirModalVersiones(<%= a.id_actividad %>, '<%= a.nombre.replace(/'/g, "\\'") %>')" title="Versiones" style="display:inline-flex; align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></button>
+                        <button class="btn btn-ghost btn-sm" onclick='editarActividad(<%= JSON.stringify(a) %>)' title="Editar" style="display:inline-flex; align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+                        <button class="btn btn-danger btn-sm" onclick="eliminarActividad(<%= a.id_actividad %>)" title="Eliminar" style="display:inline-flex; align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+                      </div>
+                    </td>
+                  </tr>
+                  </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- ════════════════════ TAB: TICKETS ════════════════════════════════ -->
+      <div id="tab-tickets" class="tab-panel">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title" style="display:flex; align-items:center; gap:0.4rem;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="6" y1="9" x2="6" y2="15"/><line x1="18" y1="9" x2="18" y2="15"/><line x1="10" y1="12" x2="14" y2="12"/></svg> Tickets del Proyecto</span>
+            <span class="badge badge-blue"><%= (ticketsProyecto || []).length %> tickets</span>
+          </div>
+          <% if (ticketsProyecto && ticketsProyecto.length > 0) { %>
+          <div class="table-wrapper" style="border:none; background:transparent; max-height: 600px; overflow-y: auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Título</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% ticketsProyecto.forEach(t => { %>
+                <tr onclick="window.open('/tickets/<%= t.ticket_id %>','_blank')" style="cursor:pointer;">
+                  <td><span class="ticket-id"><%= t.ticket_id %></span></td>
+                  <td style="max-width:400px;"><span class="ticket-title-text"><%= t.titulo %></span></td>
+                  <td>
+                    <span class="badge
+                      <% if (t.estado_actual === 'Solicitado') { %>badge-blue
+                      <% } else if (t.estado_actual === 'Liberado') { %>badge-green
+                      <% } else if (t.estado_actual === 'En Desarrollo') { %>badge-teal
+                      <% } else if (t.estado_actual === 'En Pruebas QA' || t.estado_actual === 'En Pruebas UAT') { %>badge-yellow
+                      <% } else { %>badge-slate<% } %>"
+                      style="font-size:0.68rem;">
+                      <%= t.estado_actual %>
+                    </span>
+                  </td>
+                </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+          <% } else { %>
+          <div style="text-align:center; padding:2.5rem; color:var(--text-muted);">
+            <div style="display:flex; justify-content:center; color:var(--text-muted); margin-bottom:0.5rem;"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="6" y1="9" x2="6" y2="15"/><line x1="18" y1="9" x2="18" y2="15"/><line x1="10" y1="12" x2="14" y2="12"/></svg></div>
+            <h3 style="margin-bottom:0.5rem;">Sin tickets registrados</h3>
+            <p style="color:var(--text-muted);">No hay tickets creados para este proyecto.</p>
+          </div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- ════════════════════ TAB: METODOLOGÍA ═══════════════════════════ -->
+      <div id="tab-metodologia" class="tab-panel">
+        <% if (!arbolMetodologia) { %>
+        <div class="card" style="text-align:center; padding:2.5rem;">
+          <div style="font-size:3rem; margin-bottom:1rem;">📐</div>
+          <h3 style="margin-bottom:0.5rem;">Sin metodología asignada</h3>
+          <p style="color:var(--text-muted); margin-bottom:1.25rem;">Este proyecto no tiene una metodología de trabajo asignada. Edita el proyecto para asignar una.</p>
+          <% if (resumenCronograma.total === 0) { %>
+          <a href="/admin/proyectos/<%= proyecto.id_proyecto %>/editar" class="btn btn-primary">Asignar Metodología</a>
+          <% } else { %>
+          <a href="/admin/metodologias" class="btn btn-secondary">Ver Metodologías</a>
+          <% } %>
+        </div>
+        <% } else { %>
+        <div class="card">
+          <div class="card-header" style="margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center;">
+            <span class="card-title" style="display:flex; align-items:center; gap:0.4rem;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> <%= arbolMetodologia.nombre %></span>
+            <a href="/admin/metodologias" class="btn btn-ghost btn-sm" title="Gestionar estructura de la metodología" style="display:inline-flex; align-items:center; gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Gestionar Metodología</a>
+          </div>
+
+          <!-- Resumen de cobertura -->
+          <%
+            const todasFases = (arbolMetodologia.etapas || []).flatMap(e => e.fases || []);
+            const fasesConActividad = cronograma.filter(a => a.id_fase).map(a => a.id_fase);
+            const fasesUnicas = [...new Set(fasesConActividad)];
+          %>
+          <div style="display:flex; gap:0.75rem; margin-bottom:1rem; flex-wrap:wrap;">
+            <span class="badge badge-blue"><%= todasFases.length %> fases definidas</span>
+            <span class="badge badge-teal"><%= fasesUnicas.length %> fases con actividades</span>
+            <span class="badge badge-slate"><%= cronograma.length %> actividades en cronograma</span>
+          </div>
+
+          <% arbolMetodologia.etapas.forEach((etapa, ei) => {
+            // Contar actividades del cronograma en fases de esta etapa
+            const fasesDeEtapa = (etapa.fases || []).map(f => f.id_fase);
+            const actDeEtapa = cronograma.filter(a => fasesDeEtapa.includes(a.id_fase));
+            const pctEtapa = actDeEtapa.length > 0
+              ? (actDeEtapa.reduce((s,a) => s + parseFloat(a.porcentaje_avance||0), 0) / actDeEtapa.length).toFixed(0)
+              : null;
+          %>
+          <div class="accordion-item" style="margin-bottom:0.5rem;">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+              <span style="font-size:0.85rem; font-weight:600;">
+                <span style="color:var(--accent);">Etapa <%= ei+1 %>:</span> <%= etapa.nombre %>
+              </span>
+              <div style="display:flex; align-items:center; gap:0.5rem;">
+                <span class="badge badge-blue" style="font-size:0.65rem;"><%= etapa.fases ? etapa.fases.length : 0 %> fases</span>
+                <% if (actDeEtapa.length > 0) { %>
+                <span class="badge badge-teal" style="font-size:0.65rem;"><%= actDeEtapa.length %> act. · <%= pctEtapa %>%</span>
+                <% } %>
+                <span style="color:var(--text-muted); transition:transform 0.2s;" class="accordion-arrow">▼</span>
+              </div>
+            </div>
+            <div class="accordion-body">
+              <% if (etapa.fases && etapa.fases.length > 0) { %>
+              <% etapa.fases.forEach((fase, fi) => {
+                const actFase = cronograma.filter(a => a.id_fase === fase.id_fase);
+                const pctFase = actFase.length > 0
+                  ? (actFase.reduce((s,a) => s + parseFloat(a.porcentaje_avance||0), 0) / actFase.length).toFixed(0)
+                  : null;
+              %>
+              <div style="margin-bottom:0.75rem; padding:0.65rem 0.8rem; background:var(--bg-primary); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+                  <div style="font-size:0.82rem; font-weight:600; color:var(--text-primary);">
+                    <span style="color:var(--purple);">Fase <%= fi+1 %>:</span> <%= fase.nombre %>
+                  </div>
+                  <% if (pctFase !== null) { %>
+                  <span style="font-size:0.72rem; font-weight:700; color:var(--accent); background:var(--accent-subtle); padding:0.15rem 0.5rem; border-radius:99px;"><%= pctFase %>% · <%= actFase.length %> act.</span>
+                  <% } else { %>
+                  <span style="font-size:0.7rem; color:var(--text-muted);">Sin actividades</span>
+                  <% } %>
+                </div>
+                <% if (fase.ecm && fase.ecm.length > 0) { %>
+                <div style="display:flex; flex-wrap:wrap; gap:0.3rem; margin-top:0.3rem;">
+                  <% fase.ecm.forEach(ecm => { %>
+                  <span style="font-size:0.68rem; padding:0.15rem 0.55rem; background:var(--bg-tertiary); border:1px solid var(--border-subtle); border-radius:var(--radius-full); color:var(--text-muted); display:inline-flex; align-items:center; gap:0.25rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> <%= ecm.nombre %> <span style="color:var(--teal);">(<%= ecm.tipo %>)</span>
+                  </span>
+                  <% }) %>
+                </div>
+                <% } %>
+              </div>
+              <% }) %>
+              <% } else { %>
+              <p style="font-size:0.82rem; color:var(--text-muted);">Sin fases definidas en esta etapa</p>
+              <% } %>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+        <% } %>
+      </div>
+
+      <!-- ════════════════════ TAB: RANKING ════════════════════════════════ -->
+      <div id="tab-ranking" class="tab-panel">
+        <div class="card">
+          <div class="card-header" style="margin-bottom: 1.25rem;">
+            <span class="card-title" style="display:flex; align-items:center; gap:0.4rem;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6m12 5h1.5a2.5 2.5 0 0 0 0-5H18M12 22h.01M12 14c-1.66 0-3-1.34-3-3V4h6v7c0 1.66-1.34 3-3 3z"/></svg> Ranking de Avance del Equipo</span>
+          </div>
+          <% if (typeof ranking !== 'undefined' && ranking && ranking.length > 0) { %>
+          <% ranking.forEach((m, i) => { %>
+          <div class="member-item" style="margin-bottom: 0.5rem; justify-content: space-between; align-items: center; display: flex;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1;">
+              <div style="font-size: 0.85rem; font-weight: 700; width: 32px; height: 24px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; background: <%= i === 0 ? 'rgba(245, 158, 11, 0.15)' : i === 1 ? 'rgba(148, 163, 184, 0.15)' : i === 2 ? 'rgba(180, 83, 9, 0.15)' : 'transparent' %>; color: <%= i === 0 ? '#f59e0b' : i === 1 ? '#94a3b8' : i === 2 ? '#b45309' : 'var(--text-muted)' %>;"><%= i+1 %></div>
+              <div>
+                <div style="font-size: 0.85rem; font-weight: 600;"><%= m.nombre %></div>
+                <div style="font-size: 0.72rem; color: var(--text-muted);"><%= m.rol %> · <%= m.total_reportes %> reportes</div>
+              </div>
+            </div>
+            <div style="flex: 1; margin: 0 1.5rem;">
+              <div class="prog-bar-lg" style="height: 8px; width: 100%; margin: 0; background: var(--bg-secondary);">
+                <div class="prog-bar-fill" style="width: <%= m.promedio_avance || 0 %>%; background: linear-gradient(90deg, var(--accent), #7c3aed);"></div>
+              </div>
+            </div>
+            <div style="font-size: 1rem; font-weight: 700; color: var(--accent);"><%= parseFloat(m.promedio_avance||0).toFixed(1) %>%</div>
+          </div>
+          <% }); %>
+          <% } else { %>
+          <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+            <div style="display:flex; justify-content:center; color:var(--text-muted); margin-bottom:0.5rem;"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6m12 5h1.5a2.5 2.5 0 0 0 0-5H18M12 22h.01M12 14c-1.66 0-3-1.34-3-3V4h6v7c0 1.66-1.34 3-3 3z"/></svg></div>
+            <p style="font-size: 0.85rem;">No hay reportes de avance registrados en este proyecto aún.</p>
+          </div>
+          <% } %>
+
+          <!-- Historial de reportes -->
+          <% if (typeof reportes !== 'undefined' && reportes && reportes.length > 0) { %>
+          <div class="divider" style="margin: 1.5rem 0;"></div>
+          <h3 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text-secondary); display:flex; align-items:center; gap:0.4rem;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> Historial Reciente de Reportes</h3>
+          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <% reportes.slice(0, 10).forEach(r => { %>
+            <div style="display: flex; gap: 1rem; align-items: center; padding: 0.5rem; border-bottom: 1px solid var(--border-subtle); font-size: 0.8rem;">
+              <div style="flex: 1;">
+                <span style="font-weight: 600; color: var(--text-primary);"><%= r.reportado_por %></span>
+                <span style="color: var(--text-muted);"> en <em><%= r.actividad_nombre %></em></span>
+                <% if (r.comentario) { %>
+                <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.15rem; font-style: italic;">"<%= r.comentario %>"</div>
+                <% } %>
+              </div>
+              <span style="font-weight: 700; color: var(--accent);">+<%= r.porcentaje %>%</span>
+              <span style="font-size: 0.72rem; color: var(--text-muted); white-space: nowrap;">
+                <%= new Date(r.fecha_reporte).toLocaleDateString('es-PE', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) %>
+              </span>
+            </div>
+            <% }); %>
+          </div>
+          <% } %>
+        </div>
+      </div>
+
+    </div><!-- /page-container -->
+
+    <%- include('../partials/footer') %>
+  </div><!-- /main-content -->
+</div><!-- /app-wrapper -->
+
+<!-- ═══ MODAL AGREGAR MIEMBRO ════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-agregar-miembro">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">➕ Agregar Miembro al Equipo</span>
+      <button class="modal-close" onclick="closeModal('modal-agregar-miembro')">✕</button>
+    </div>
+    <form onsubmit="agregarMiembro(event)">
+      <div class="form-group">
+        <label class="form-label">Usuario *</label>
+        <select name="id_usuario" class="form-control" required>
+          <option value="">— Seleccionar usuario —</option>
+          <% todosUsuarios.forEach(u => { %>
+          <option value="<%= u.id %>"><%= u.nombre %> (<%= u.correo %>)</option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Rol en el Proyecto *</label>
+        <select name="rol_en_proyecto" class="form-control" required>
+          <option value="">— Seleccionar rol —</option>
+          <% rolesProyecto.forEach(r => { %>
+          <option value="<%= r %>"><%= r %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div id="error-miembro" style="display:none;" class="alert alert-error"></div>
+      <div style="display:flex; gap:0.75rem; justify-content:flex-end; margin-top:1rem;">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('modal-agregar-miembro')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Agregar Miembro</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══ MODAL AGREGAR CLIENTE ═════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-agregar-cliente">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🤝 Agregar Cliente</span>
+      <button class="modal-close" onclick="closeModal('modal-agregar-cliente')">✕</button>
+    </div>
+    <form onsubmit="agregarCliente(event)">
+      <div class="form-group">
+        <label class="form-label">Usuario / Cliente *</label>
+        <select name="id_usuario" class="form-control" required>
+          <option value="">— Seleccionar usuario —</option>
+          <% todosUsuarios.forEach(u => { %>
+            <% if (u.rol === 'Solicitante') { %>
+            <option value="<%= u.id %>"><%= u.nombre %> (<%= u.correo %>)</option>
+            <% } %>
+          <% }) %>
+        </select>
+      </div>
+      <div id="error-cliente" style="display:none;" class="alert alert-error"></div>
+      <div style="display:flex; gap:0.75rem; justify-content:flex-end; margin-top:1rem;">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('modal-agregar-cliente')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Agregar Cliente</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══ MODAL ACTIVIDAD ═══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-actividad">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-header">
+      <span class="modal-title" id="act-modal-title">➕ Nueva Actividad</span>
+      <button class="modal-close" onclick="closeModal('modal-actividad')">✕</button>
+    </div>
+    <form onsubmit="guardarActividad(event)">
+      <input type="hidden" name="id_actividad" id="act-id">
+      <div class="grid-2" style="gap:0.65rem;">
+        <!-- Nombre -->
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Nombre de la Actividad *</label>
+          <input type="text" name="nombre" id="act-nombre" class="form-control" required placeholder="Ej: Análisis de requerimientos del módulo X">
+        </div>
+        <!-- Descripción -->
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Descripción</label>
+          <textarea name="descripcion" id="act-descripcion" class="form-control" rows="2" placeholder="Descripción opcional de la actividad"></textarea>
+        </div>
+        <!-- Fase de metodología -->
+        <div class="form-group">
+          <label class="form-label">Fase (Metodología)</label>
+          <select name="id_fase" id="act-fase" class="form-control">
+            <option value="">— Sin fase específica —</option>
+            <% if (arbolMetodologia && arbolMetodologia.etapas) { %>
+              <% arbolMetodologia.etapas.forEach(etapa => { %>
+                <optgroup label="📌 Etapa: <%= etapa.nombre %>">
+                  <% if (etapa.fases && etapa.fases.length > 0) { %>
+                    <% etapa.fases.forEach(fase => { %>
+                      <option value="<%= fase.id_fase %>"><%= fase.nombre %></option>
+                    <% }) %>
+                  <% } else { %>
+                    <option disabled>— Sin fases en esta etapa —</option>
+                  <% } %>
+                </optgroup>
+              <% }) %>
+            <% } else { %>
+              <option disabled>— Proyecto sin metodología asignada —</option>
+            <% } %>
+          </select>
+        </div>
+        <!-- Responsable -->
+        <div class="form-group">
+          <label class="form-label">Responsable (Miembro)</label>
+          <select name="id_usuario" id="act-usuario" class="form-control">
+            <option value="">— Sin asignar —</option>
+            <% if (equipo && equipo.length > 0) { %>
+              <% equipo.forEach(m => { %>
+                <option value="<%= m.id_usuario %>"><%= m.nombre %> (<%= m.rol_en_proyecto %>)</option>
+              <% }) %>
+            <% } else { %>
+              <option disabled>— Sin miembros en el equipo —</option>
+            <% } %>
+          </select>
+        </div>
+        <!-- Entregable (Ticket) -->
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Entregable vinculado (Ticket)</label>
+          <select name="id_entregable" id="act-entregable" class="form-control">
+            <option value="">— Sin entregable vinculado —</option>
+            <% if (ticketsProyecto && ticketsProyecto.length > 0) { %>
+              <% ticketsProyecto.forEach(t => { %>
+                <option value="<%= t.id_sc %>"><%= t.ticket_id %> — <%= t.titulo %> (<%= t.estado_actual %>)</option>
+              <% }) %>
+            <% } else { %>
+              <option disabled>— Sin tickets en este proyecto —</option>
+            <% } %>
+          </select>
+        </div>
+        <!-- Fechas -->
+        <div class="form-group">
+          <label class="form-label">Fecha Inicio *</label>
+          <input type="date" name="fecha_inicio" id="act-fecha-inicio" class="form-control" required onclick="this.showPicker()" onfocus="this.showPicker()"
+            min="<%= proyecto.fecha_inicio ? new Date(proyecto.fecha_inicio).toISOString().substring(0,10) : '' %>"
+            max="<%= proyecto.fecha_fin ? new Date(proyecto.fecha_fin).toISOString().substring(0,10) : '' %>">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha Fin *</label>
+          <input type="date" name="fecha_fin" id="act-fecha-fin" class="form-control" required onclick="this.showPicker()" onfocus="this.showPicker()"
+            min="<%= proyecto.fecha_inicio ? new Date(proyecto.fecha_inicio).toISOString().substring(0,10) : '' %>"
+            max="<%= proyecto.fecha_fin ? new Date(proyecto.fecha_fin).toISOString().substring(0,10) : '' %>">
+        </div>
+        <!-- Estado y Avance -->
+        <div class="form-group">
+          <label class="form-label">Estado</label>
+          <select name="estado" id="act-estado" class="form-control">
+            <option value="Pendiente">Pendiente</option>
+            <option value="En Progreso">En Progreso</option>
+            <option value="Completado">Completado</option>
+            <option value="Bloqueado">Bloqueado</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">% Avance Inicial</label>
+          <input type="number" name="porcentaje_avance" id="act-avance" class="form-control" min="0" max="100" value="0">
+        </div>
+        <!-- Es reportable -->
+        <div class="form-group" style="grid-column:1/-1;">
+          <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+            <input type="checkbox" name="es_reportable" id="act-reportable" style="width:16px;height:16px;" checked>
+            <span class="form-label" style="margin:0;">Permitir reportes de avance por el responsable</span>
+          </label>
+        </div>
+      </div>
+      <div id="error-actividad" style="display:none;" class="alert alert-error"></div>
+      <div style="display:flex; gap:0.75rem; justify-content:flex-end; margin-top:1rem;">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('modal-actividad')">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="btn-guardar-act">Guardar Actividad</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Versiones de ECS -->
+<div class="modal-overlay" id="modal-versiones">
+  <div class="modal" id="modal-versiones-box" style="width:680px; max-width:96vw; max-height:96vh; display:flex; flex-direction:column; overflow:hidden; padding:1.25rem;">
+    <!-- Header -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+      <span class="modal-title" style="display:inline-flex; align-items:center; gap:0.4rem;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        Versiones del ECS
+      </span>
+      <button class="modal-close" onclick="closeModal('modal-versiones')">✕</button>
+    </div>
+    <p id="modal-versiones-actividad-nombre" style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1rem;font-weight:500;"></p>
+
+    <!-- TABS internos -->
+    <div style="display:flex; gap:0.25rem; border-bottom:1px solid var(--border-subtle); margin-bottom:1rem;">
+      <button id="vtab-btn-historial" class="tab-btn active" onclick="switchVTabAdmin('historial')" style="font-size:0.8rem; padding:0.45rem 0.9rem; display:inline-flex; align-items:center; gap:0.3rem;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Historial
+      </button>
+      <button id="vtab-btn-comparar" class="tab-btn" onclick="switchVTabAdmin('comparar')" style="font-size:0.8rem; padding:0.45rem 0.9rem; display:inline-flex; align-items:center; gap:0.3rem;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Comparar Versiones
+      </button>
+    </div>
+
+    <!-- TAB: Historial -->
+    <div id="vtab-historial" style="flex:1; overflow-y:auto; min-height:0;">
+      <table class="cronograma-table" style="font-size:0.82rem; width:100%;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border-subtle);">
+            <th style="padding:0.5rem 0.4rem; width:35px; text-align:center;">
+              <input type="checkbox" id="check-all-versions" onchange="toggleAllVersionCheckboxes(this)" title="Seleccionar todos">
+            </th>
+            <th style="padding:0.5rem 0.4rem; width:90px;">Versión</th>
+            <th style="padding:0.5rem 0.4rem;">Descripción del Cambio</th>
+            <th style="padding:0.5rem 0.4rem; width:110px;">Autor</th>
+            <th style="padding:0.5rem 0.4rem; width:120px;">Fecha</th>
+            <th style="padding:0.5rem 0.4rem; width:80px;">Tipo</th>
+            <th style="padding:0.5rem 0.4rem; width:80px; text-align:right;">Acción</th>
+          </tr>
+        </thead>
+        <tbody id="versiones-tabla-body"></tbody>
+      </table>
+      <div id="versiones-vacio" style="text-align:center; padding:2.5rem; color:var(--text-muted); display:none;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.6; margin:0 auto 0.75rem; display:block;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <p style="font-size:0.85rem; margin-top:0.5rem;">No hay versiones registradas para este elemento de configuración.</p>
+      </div>
+      <div style="margin-top:0.75rem; display:flex; justify-content:flex-end;">
+        <button class="btn btn-primary" onclick="switchVTabAdmin('comparar')" style="font-size:0.78rem; padding:0.4rem 1rem; display:inline-flex; align-items:center; gap:0.35rem;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Comparar seleccionados
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB: Comparar -->
+    <div id="vtab-comparar" style="display:none; flex:1; overflow:hidden; flex-direction:column; min-height:0;">
+      <div id="comparar-seleccion-msg" style="text-align:center; padding:2rem; color:var(--text-muted);">
+        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.6; margin:0 auto 0.5rem; display:block;"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        <p style="font-size:0.85rem;">Selecciona exactamente <strong>2 versiones</strong> en el Historial y vuelve aquí para comparar.</p>
+      </div>
+      <div id="comparar-visor" style="display:none; flex:1; overflow:hidden; flex-direction:column; gap:0.75rem; min-height:0;">
+        <div style="display:flex; align-items:center; gap:1rem; flex-shrink:0; flex-wrap:wrap;">
+          <div id="comparar-header-v1" style="flex:1; background:rgba(248,81,73,0.1); border:1px solid rgba(248,81,73,0.3); border-radius:8px; padding:0.5rem 0.85rem; font-size:0.8rem; font-weight:600;"></div>
+          <div style="font-size:1.2rem; color:var(--text-muted);">↔</div>
+          <div id="comparar-header-v2" style="flex:1; background:rgba(46,164,79,0.1); border:1px solid rgba(46,164,79,0.3); border-radius:8px; padding:0.5rem 0.85rem; font-size:0.8rem; font-weight:600;"></div>
+        </div>
+        <div style="display:flex; gap:0.5rem; flex-shrink:0; align-items:center; flex-wrap:wrap;">
+          <span style="font-size:0.75rem; color:var(--text-muted);">Vista:</span>
+          <button class="btn btn-ghost" id="vbtn-sidebyside" onclick="setVistaComparacionAdmin('sidebyside')" style="font-size:0.73rem; padding:0.3rem 0.65rem; border:1px solid var(--accent); display:inline-flex; align-items:center; gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="18" x="3" y="3" rx="1"/><rect width="8" height="18" x="13" y="3" rx="1"/></svg> Lado a Lado</button>
+          <button class="btn btn-ghost" id="vbtn-diff" onclick="setVistaComparacionAdmin('diff')" style="font-size:0.73rem; padding:0.3rem 0.65rem; display:inline-flex; align-items:center; gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Diff de Texto</button>
+          <button class="btn btn-ghost" id="vbtn-ia" onclick="setVistaComparacionAdmin('ia')" style="font-size:0.73rem; padding:0.3rem 0.65rem; display:inline-flex; align-items:center; gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="10" x="3" y="11" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></svg> Comparar con IA</button>
+          <span id="comparar-tipo-badge" style="font-size:0.73rem; color:var(--text-muted); margin-left:auto;"></span>
+        </div>
+        <div id="panel-sidebyside" style="flex:1; display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; overflow:hidden; min-height:500px; height:100%;">
+          <div style="border:1px solid rgba(248,81,73,0.4); border-radius:10px; overflow:hidden; display:flex; flex-direction:column;">
+            <div style="background:rgba(248,81,73,0.08); padding:0.4rem 0.75rem; font-size:0.72rem; font-weight:700; color:#f85149; flex-shrink:0;">VERSIÓN ANTIGUA</div>
+            <div id="visor-v1" style="flex:1; overflow:auto; background:var(--bg-secondary); height:100%;"></div>
+          </div>
+          <div style="border:1px solid rgba(46,164,79,0.4); border-radius:10px; overflow:hidden; display:flex; flex-direction:column;">
+            <div style="background:rgba(46,164,79,0.08); padding:0.4rem 0.75rem; font-size:0.72rem; font-weight:700; color:#3fb950; flex-shrink:0;">VERSIÓN NUEVA</div>
+            <div id="visor-v2" style="flex:1; overflow:auto; background:var(--bg-secondary); height:100%;"></div>
+          </div>
+        </div>
+        <div id="panel-diff" style="display:none; flex:1; overflow:auto; background:var(--bg-tertiary,#1a1a24); border-radius:10px; border:1px solid var(--border-subtle); padding:0.75rem; font-family:monospace; font-size:0.78rem; min-height:500px; height:100%;"><div id="diff-contenido"></div></div>
+        <div id="panel-ia" style="display:none; flex:1; overflow:auto; background:var(--bg-secondary); border-radius:10px; border:1px solid var(--border-subtle); padding:1.25rem; font-size:0.85rem; line-height:1.6; min-height:500px; height:100%; color:var(--text-primary);">
+          <div id="ia-loading" style="display:none; text-align:center; padding:5rem 0;">
+            <div style="border:3px solid rgba(255,255,255,0.1); border-top:3px solid var(--accent); border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite; margin:0 auto 1.25rem;"></div>
+            <p style="color:var(--text-muted); font-weight:600; font-size:0.85rem;">Analizando semánticamente con Gemini Flash...</p>
+          </div>
+          <div id="ia-contenido" style="overflow-y:auto; height:100%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inputs ocultos para el form de versión (se mantienen para compatibilidad con enviarNuevaVersion) -->
+    <input type="hidden" id="version-id-actividad" name="idActividad">
+    <input type="hidden" id="version-id-proyecto" name="idProyecto" value="<%= proyecto.id_proyecto %>">
+    <input type="hidden" id="version-numero" name="versionNumero">
+    <input type="hidden" id="version-descripcion" name="descripcionCambio">
+    <input type="hidden" id="version-contenido-texto" name="contenidoTexto">
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsdiff/5.2.0/diff.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+
+<script>
+  const PROYECTO_ID = <%= proyecto.id_proyecto %>;
+  const PROYECTO_GITHUB_REPO = '<%= proyecto.github_repo || "" %>';
+  const ACTIVIDADES_CRONOGRAMA = <%- JSON.stringify(cronograma) %>;
+  const TODOS_USUARIOS = <%- JSON.stringify(todosUsuarios) %>;
+  const PROYECTO_FECHA_INICIO = '<%= proyecto.fecha_inicio ? new Date(proyecto.fecha_inicio).toISOString().substring(0,10) : "" %>';
+  const PROYECTO_FECHA_FIN = '<%= proyecto.fecha_fin ? new Date(proyecto.fecha_fin).toISOString().substring(0,10) : "" %>';
+
+  // ─── Cargar Equipo/Clientes Predeterminados del Sistema ──────────────────────
+  async function agregarEquipoPredeterminado() {
+    const mapeoPredeterminado = {
+      'sergio@upt.pe': 'Gestor de Configuración',
+      'diego@upt.pe': 'Líder Técnico',
+      'gregory@upt.pe': 'Desarrollador Asignado',
+      'cesar@upt.pe': 'Equipo QA / Tester',
+      'director@upt.pe': 'Director',
+      'ccb@upt.pe': 'Comité de Control (CCB)'
+    };
+
+    const usuariosParaAgregar = [];
+
+    // Filtrar los usuarios globales que coincidan con los correos del equipo de demo
+    TODOS_USUARIOS.forEach(u => {
+      const rolProyecto = mapeoPredeterminado[u.correo];
+      if (rolProyecto) {
+        usuariosParaAgregar.push({
+          id_usuario: u.id,
+          rol_en_proyecto: rolProyecto,
+          nombre: u.nombre
+        });
+      }
+    });
+
+    if (usuariosParaAgregar.length === 0) {
+      alert('No se encontraron los usuarios de demostración predefinidos en la base de datos.');
+      return;
+    }
+
+    if (!confirm(`¿Deseas agregar automáticamente a los ${usuariosParaAgregar.length} miembros predefinidos con sus roles en el proyecto?`)) {
+      return;
+    }
+
+    let agregados = 0;
+    let errores = [];
+
+    for (const usr of usuariosParaAgregar) {
+      try {
+        const res = await fetch(`/api/admin/proyectos/${PROYECTO_ID}/equipo`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            id_usuario: usr.id_usuario,
+            rol_en_proyecto: usr.rol_en_proyecto
+          })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          agregados++;
+        } else {
+          // Ignorar duplicados
+          if (data.error && (data.error.includes('duplicate') || data.error.includes('ya existe') || data.error.includes('repetido') || data.error.includes('Miembro ya registrado'))) {
+            // Ya registrado
+          } else {
+            errores.push(`${usr.nombre}: ${data.error || 'Error'}`);
+          }
+        }
+      } catch (err) {
+        errores.push(`${usr.nombre}: ${err.message}`);
+      }
+    }
+
+    if (errores.length > 0) {
+      alert(`Se agregaron ${agregados} miembros. Hubo algunos detalles:\n` + errores.join('\n'));
+    } else {
+      alert(`¡Se agregaron con éxito ${agregados} miembros al equipo del proyecto!`);
+    }
+    location.reload();
+  }
+
+  async function agregarClientesPredeterminados() {
+    const correosPredeterminados = ['docente@upt.pe'];
+    const usuariosParaAgregar = [];
+
+    TODOS_USUARIOS.forEach(u => {
+      if (correosPredeterminados.includes(u.correo)) {
+        usuariosParaAgregar.push({
+          id_usuario: u.id,
+          nombre: u.nombre
+        });
+      }
+    });
+
+    if (usuariosParaAgregar.length === 0) {
+      alert('No se encontró el cliente predefinido (docente@upt.pe) en la base de datos.');
+      return;
+    }
+
+    if (!confirm(`¿Deseas agregar automáticamente a los clientes predefinidos (docente@upt.pe)?`)) {
+      return;
+    }
+
+    let agregados = 0;
+    let errores = [];
+
+    for (const usr of usuariosParaAgregar) {
+      try {
+        const res = await fetch(`/api/admin/proyectos/${PROYECTO_ID}/clientes`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            id_usuario: usr.id_usuario
+          })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          agregados++;
+        } else {
+          if (data.error && (data.error.includes('duplicate') || data.error.includes('ya existe') || data.error.includes('registrado'))) {
+            // Ya registrado
+          } else {
+            errores.push(`${usr.nombre}: ${data.error || 'Error'}`);
+          }
+        }
+      } catch (err) {
+        errores.push(`${usr.nombre}: ${err.message}`);
+      }
+    }
+
+    if (errores.length > 0) {
+      alert(`Se agregaron ${agregados} clientes. Detalles:\n` + errores.join('\n'));
+    } else {
+      alert(`¡Se agregaron con éxito ${agregados} clientes al proyecto!`);
+    }
+    location.reload();
+  }
+
+  let cronYear = new Date().getFullYear();
+  let cronMonth = new Date().getMonth();
+
+  // ─── Tabs ───────────────────────────────────────────────────────────────────
+  function switchTab(panelId, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(panelId).classList.add('active');
+    btn.classList.add('active');
+    
+    // Guardar pestaña activa
+    localStorage.setItem('activeTab_' + PROYECTO_ID, panelId);
+
+    // Si entramos a la pestaña del cronograma, inicializar el calendario si no está inicializado
+    if (panelId === 'tab-cronograma') {
+      const savedView = localStorage.getItem('cronogramaView_' + PROYECTO_ID) || 'calendario';
+      switchCronogramaView(savedView);
+    }
+  }
+
+  // Restaurar pestaña activa al cargar la página
+  document.addEventListener('DOMContentLoaded', () => {
+    initCronogramaCalendar();
+    const savedView = localStorage.getItem('cronogramaView_' + PROYECTO_ID) || 'calendario';
+    switchCronogramaView(savedView);
+
+    // 1. Verificar si hay pestaña especificada en la URL (ej: ?tab=tickets)
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlTab = urlParams.get('tab');
+    if (urlTab) {
+      const btn = document.getElementById('btn-tab-' + urlTab);
+      if (btn) {
+        switchTab('tab-' + urlTab, btn);
+        return;
+      }
+    }
+
+    // 2. Si no, restaurar desde localStorage
+    const activeTab = localStorage.getItem('activeTab_' + PROYECTO_ID);
+    if (activeTab) {
+      const btn = document.getElementById('btn-' + activeTab);
+      if (btn) {
+        switchTab(activeTab, btn);
+      }
+    }
+  });
+
+  // ─── Calendario Mensual del Cronograma ──────────────────────────────────────
+  function switchCronogramaView(view) {
+    const calendarView = document.getElementById('cview-calendario');
+    const ganttView = document.getElementById('cview-gantt');
+    const tablaView = document.getElementById('cview-tabla');
+    
+    if (!calendarView || !ganttView || !tablaView) return;
+
+    // Ocultar todas
+    calendarView.style.display = 'none';
+    ganttView.style.display = 'none';
+    tablaView.style.display = 'none';
+    
+    // Quitar active de botones
+    const btnCal = document.getElementById('subbtn-calendario');
+    const btnGantt = document.getElementById('subbtn-gantt');
+    const btnTabla = document.getElementById('subbtn-tabla');
+
+    if (btnCal) { btnCal.classList.remove('active'); btnCal.style.color = 'var(--text-muted)'; }
+    if (btnGantt) { btnGantt.classList.remove('active'); btnGantt.style.color = 'var(--text-muted)'; }
+    if (btnTabla) { btnTabla.classList.remove('active'); btnTabla.style.color = 'var(--text-muted)'; }
+
+    // Mostrar la seleccionada
+    if (view === 'calendario') {
+      calendarView.style.display = 'block';
+      if (btnCal) { btnCal.classList.add('active'); btnCal.style.color = 'var(--accent)'; }
+      renderCronogramaCalendar();
+    } else if (view === 'gantt') {
+      ganttView.style.display = 'block';
+      if (btnGantt) { btnGantt.classList.add('active'); btnGantt.style.color = 'var(--accent)'; }
+    } else {
+      tablaView.style.display = 'block';
+      if (btnTabla) { btnTabla.classList.add('active'); btnTabla.style.color = 'var(--accent)'; }
+    }
+    localStorage.setItem('cronogramaView_' + PROYECTO_ID, view);
+  }
+
+  function initCronogramaCalendar() {
+    const minD = PROYECTO_FECHA_INICIO;
+    if (minD) {
+      const parts = minD.split('-');
+      cronYear = parseInt(parts[0]);
+      cronMonth = parseInt(parts[1]) - 1;
+    } else if (ACTIVIDADES_CRONOGRAMA.length > 0) {
+      const parts = ACTIVIDADES_CRONOGRAMA[0].fecha_inicio.split('-');
+      cronYear = parseInt(parts[0]);
+      cronMonth = parseInt(parts[1]) - 1;
+    }
+  }
+
+  function renderCronogramaCalendar() {
+    const MESES_NOMBRES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                           'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    
+    const tituloEl = document.getElementById('cron-cal-titulo');
+    if (tituloEl) tituloEl.textContent = `${MESES_NOMBRES[cronMonth]} ${cronYear}`;
+    
+    const grid = document.getElementById('cron-cal-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    
+    // Primer día del mes
+    const primero = new Date(cronYear, cronMonth, 1);
+    // Lunes = 0, ..., Domingo = 6
+    let offset = primero.getDay() - 1;
+    if (offset < 0) offset = 6;
+    
+    // Total de días del mes
+    const totalDias = new Date(cronYear, cronMonth + 1, 0).getDate();
+    // Total de días del mes anterior
+    const totalDiasAnt = new Date(cronYear, cronMonth, 0).getDate();
+    
+    // Celdas mes anterior
+    for (let i = offset - 1; i >= 0; i--) {
+      const d = totalDiasAnt - i;
+      grid.appendChild(crearCeldaCalendario(cronYear, cronMonth - 1, d, true));
+    }
+    
+    // Celdas mes actual
+    for (let d = 1; d <= totalDias; d++) {
+      grid.appendChild(crearCeldaCalendario(cronYear, cronMonth, d, false));
+    }
+    
+    // Celdas mes siguiente para completar la cuadrícula de 7 columnas
+    const totalCeldasActuales = offset + totalDias;
+    const celdasFaltantes = (7 - (totalCeldasActuales % 7)) % 7;
+    for (let d = 1; d <= celdasFaltantes; d++) {
+      grid.appendChild(crearCeldaCalendario(cronYear, cronMonth + 1, d, true));
+    }
+  }
+
+  // Helper para parsear fechas de forma segura sin desvíos de zona horaria (UTC/Local)
+  function parseLocalDate(dateInput) {
+    if (!dateInput) return null;
+    const str = (typeof dateInput === 'string') ? dateInput : new Date(dateInput).toISOString();
+    const datePart = str.substring(0, 10); // "YYYY-MM-DD"
+    const parts = datePart.split('-');
+    return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  }
+
+  function crearCeldaCalendario(año, mes, dia, esOtroMes) {
+    const cell = document.createElement('div');
+    cell.className = 'calendar-cell' + (esOtroMes ? ' other-month' : '');
+    
+    const fecha = new Date(año, mes, dia);
+    fecha.setHours(0,0,0,0);
+    
+    // Obtener formato YYYY-MM-DD en hora local sin desvíos UTC
+    const yyyy = fecha.getFullYear();
+    const mm = String(fecha.getMonth() + 1).padStart(2, '0');
+    const dd = String(fecha.getDate()).padStart(2, '0');
+    const fechaStr = `${yyyy}-${mm}-${dd}`;
+    
+    const hoy = new Date();
+    hoy.setHours(0,0,0,0);
+    if (fecha.getTime() === hoy.getTime()) {
+      cell.classList.add('today-cell');
+    }
+    
+    const num = document.createElement('div');
+    num.className = 'calendar-day-num';
+    num.textContent = dia;
+    cell.appendChild(num);
+    
+    if (esOtroMes) {
+      cell.style.cursor = 'not-allowed';
+    } else {
+      cell.onclick = () => {
+        abrirNuevaActividadConFecha(fechaStr);
+      };
+    }
+    
+    // Buscar actividades activas en esta fecha
+    ACTIVIDADES_CRONOGRAMA.forEach(a => {
+      const ini = parseLocalDate(a.fecha_inicio);
+      const fin = parseLocalDate(a.fecha_fin);
+      if (!ini || !fin) return;
+      
+      if (fecha >= ini && fecha <= fin) {
+        const ev = document.createElement('div');
+        let estClass = 'event-pendiente';
+        if (a.estado === 'Completado') estClass = 'event-completado';
+        else if (a.estado === 'En Progreso') estClass = 'event-progreso';
+        else if (a.estado === 'Bloqueado') estClass = 'event-bloqueado';
+        
+        ev.className = `calendar-event ${estClass}`;
+        ev.textContent = `[${parseFloat(a.porcentaje_avance).toFixed(0)}%] ${a.nombre}`;
+        ev.title = `${a.nombre} (${a.estado} - ${parseFloat(a.porcentaje_avance).toFixed(0)}%)\nResponsable: ${a.asignado_nombre || 'Sin asignar'}`;
+        
+        ev.onclick = (e) => {
+          e.stopPropagation();
+          editarActividad(a);
+        };
+        
+        cell.appendChild(ev);
+      }
+    });
+    
+    return cell;
+  }
+
+  function navigateCronogramaCalendar(dir) {
+    cronMonth += dir;
+    if (cronMonth < 0)  { cronMonth = 11; cronYear--; }
+    if (cronMonth > 11) { cronMonth = 0;  cronYear++; }
+    renderCronogramaCalendar();
+  }
+
+  function goTodayCronogramaCalendar() {
+    const hoy = new Date();
+    cronYear = hoy.getFullYear();
+    cronMonth = hoy.getMonth();
+    renderCronogramaCalendar();
+  }
+
+  function abrirNuevaActividadConFecha(fechaStr) {
+    // Verificar límites del proyecto
+    if (PROYECTO_FECHA_INICIO && fechaStr < PROYECTO_FECHA_INICIO) {
+      alert(`La fecha seleccionada (${fechaStr}) es anterior a la fecha de inicio del proyecto (${PROYECTO_FECHA_INICIO}).`);
+      return;
+    }
+    if (PROYECTO_FECHA_FIN && fechaStr > PROYECTO_FECHA_FIN) {
+      alert(`La fecha seleccionada (${fechaStr}) es posterior a la fecha de fin del proyecto (${PROYECTO_FECHA_FIN}).`);
+      return;
+    }
+    
+    abrirNuevaActividad();
+    document.getElementById('act-fecha-inicio').value = fechaStr;
+    document.getElementById('act-fecha-fin').value = fechaStr;
+  }
+
+  // ─── Accordion ─────────────────────────────────────────────────────────────
+  function toggleAccordion(header) {
+    const body = header.nextElementSibling;
+    const arrow = header.querySelector('.accordion-arrow');
+    body.classList.toggle('open');
+    arrow.style.transform = body.classList.contains('open') ? 'rotate(180deg)' : '';
+  }
+
+  // ─── Modales ────────────────────────────────────────────────────────────────
+  function openModal(id) {
+    document.getElementById(id).classList.add('open');
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    const errEl = document.getElementById('error-' + id.replace('modal-','').replace('-',''));
+    if (errEl) { errEl.style.display='none'; errEl.textContent=''; }
+  }
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+  });
+
+  // ─── Miembro ─────────────────────────────────────────────────────────────
+  async function agregarMiembro(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('[type=submit]');
+    const errEl = document.getElementById('error-miembro');
+    btn.textContent = 'Agregando...'; btn.disabled = true; errEl.style.display = 'none';
+    const fd = new FormData(e.target);
+    const body = Object.fromEntries(fd.entries());
+    try {
+      const res = await fetch(`/api/admin/proyectos/${PROYECTO_ID}/equipo`, {
+        method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al agregar');
+      location.reload();
+    } catch(err) {
+      errEl.textContent = err.message; errEl.style.display = 'flex';
+      btn.textContent = 'Agregar Miembro'; btn.disabled = false;
+    }
+  }
+  async function removerMiembro(id, nombre) {
+    if (!confirm(`¿Remover a ${nombre} del equipo?`)) return;
+    try {
+      const res = await fetch(`/api/admin/proyectos/${PROYECTO_ID}/equipo/${id}`, { method: 'DELETE' });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+      location.reload();
+    } catch(err) { alert('Error: ' + err.message); }
+  }
+
+  // ─── Cliente ─────────────────────────────────────────────────────────────
+  async function agregarCliente(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('[type=submit]');
+    const errEl = document.getElementById('error-cliente');
+    btn.textContent = 'Agregando...'; btn.disabled = true; errEl.style.display = 'none';
+    const fd = new FormData(e.target);
+    const body = Object.fromEntries(fd.entries());
+    try {
+      const res = await fetch(`/api/admin/proyectos/${PROYECTO_ID}/clientes`, {
+        method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al agregar');
+      location.reload();
+    } catch(err) {
+      errEl.textContent = err.message; errEl.style.display = 'flex';
+      btn.textContent = 'Agregar Cliente'; btn.disabled = false;
+    }
+  }
+  async function removerCliente(id, nombre) {
+    if (!confirm(`¿Remover a ${nombre} de clientes?`)) return;
+    try {
+      const res = await fetch(`/api/admin/proyectos/${PROYECTO_ID}/clientes/${id}`, { method: 'DELETE' });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+      location.reload();
+    } catch(err) { alert('Error: ' + err.message); }
+  }
+
+  // ─── Actividades ─────────────────────────────────────────────────────────
+  let editingActId = null;
+  function abrirNuevaActividad() {
+    editingActId = null;
+    document.getElementById('act-modal-title').textContent = '➕ Nueva Actividad';
+    document.getElementById('act-id').value = '';
+    document.getElementById('act-nombre').value = '';
+    document.getElementById('act-descripcion').value = '';
+    document.getElementById('act-fecha-inicio').value = '';
+    document.getElementById('act-fecha-fin').value = '';
+    document.getElementById('act-estado').value = 'Pendiente';
+    document.getElementById('act-avance').value = 0;
+    document.getElementById('act-reportable').checked = true;
+    document.getElementById('act-fase').value = '';
+    document.getElementById('act-usuario').value = '';
+    document.getElementById('act-entregable').value = '';
+    openModal('modal-actividad');
+  }
+  function editarActividad(a) {
+    editingActId = a.id_actividad;
+    document.getElementById('act-modal-title').textContent = 'Editar Actividad';
+    document.getElementById('act-id').value = a.id_actividad;
+    document.getElementById('act-nombre').value = a.nombre;
+    document.getElementById('act-descripcion').value = a.descripcion || '';
+    document.getElementById('act-fecha-inicio').value = a.fecha_inicio ? a.fecha_inicio.substring(0,10) : '';
+    document.getElementById('act-fecha-fin').value = a.fecha_fin ? a.fecha_fin.substring(0,10) : '';
+    document.getElementById('act-estado').value = a.estado || 'Pendiente';
+    document.getElementById('act-avance').value = a.porcentaje_avance || 0;
+    document.getElementById('act-reportable').checked = !!a.es_reportable;
+    document.getElementById('act-fase').value = a.id_fase || '';
+    document.getElementById('act-usuario').value = a.id_usuario || '';
+    document.getElementById('act-entregable').value = a.id_entregable || '';
+    openModal('modal-actividad');
+  }
+  async function guardarActividad(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-guardar-act');
+    const errEl = document.getElementById('error-actividad');
+    btn.textContent = 'Guardando...'; btn.disabled = true; errEl.style.display = 'none';
+    const fd = new FormData(e.target);
+    const body = Object.fromEntries(fd.entries());
+    body.es_reportable = document.getElementById('act-reportable').checked ? 1 : 0;
+    // Limpiar campos vacíos opcionales
+    if (!body.id_fase) delete body.id_fase;
+    if (!body.id_usuario) delete body.id_usuario;
+    if (!body.id_entregable) delete body.id_entregable;
+    
+    // Validación de fechas en cliente
+    if (body.fecha_inicio && body.fecha_fin && body.fecha_inicio > body.fecha_fin) {
+      errEl.textContent = 'La fecha de inicio no puede ser posterior a la fecha de fin.';
+      errEl.style.display = 'flex';
+      btn.textContent = 'Guardar Actividad'; btn.disabled = false;
+      return;
+    }
+    if (PROYECTO_FECHA_INICIO && body.fecha_inicio < PROYECTO_FECHA_INICIO) {
+      errEl.textContent = `La fecha de inicio (${body.fecha_inicio}) es anterior a la fecha de inicio del proyecto (${PROYECTO_FECHA_INICIO}).`;
+      errEl.style.display = 'flex';
+      btn.textContent = 'Guardar Actividad'; btn.disabled = false;
+      return;
+    }
+    if (PROYECTO_FECHA_FIN && body.fecha_fin > PROYECTO_FECHA_FIN) {
+      errEl.textContent = `La fecha de fin (${body.fecha_fin}) es posterior a la fecha de fin del proyecto (${PROYECTO_FECHA_FIN}).`;
+      errEl.style.display = 'flex';
+      btn.textContent = 'Guardar Actividad'; btn.disabled = false;
+      return;
+    }
+
+    const id = body.id_actividad;
+    const url = id ? `/api/admin/proyectos/${PROYECTO_ID}/cronograma/${id}` : `/api/admin/proyectos/${PROYECTO_ID}/cronograma`;
+    const method = id ? 'PUT' : 'POST';
+    try {
+      const res = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al guardar');
+      location.reload();
+    } catch(err) {
+      errEl.textContent = err.message; errEl.style.display = 'flex';
+      btn.textContent = 'Guardar Actividad'; btn.disabled = false;
+    }
+  }
+  async function eliminarActividad(id) {
+    if (!confirm('¿Eliminar esta actividad?')) return;
+    try {
+      const res = await fetch(`/api/admin/proyectos/${PROYECTO_ID}/cronograma/${id}`, { method: 'DELETE' });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+      location.reload();
+    } catch(err) { alert('Error: ' + err.message); }
+  }
+
+  // ─── CONTROL DE VERSIONES (ECS) CLIENT SIDE ───
+  let versionActividadActual = null;
+  let versionesActuales = [];
+
+  // ─── TABS INTERNOS DEL MODAL DE VERSIONES (ADMIN) ────────────────────────────
+  let vTabAdminActual     = 'historial';
+  let vistaComparacionAdmin = 'sidebyside';
+
+  function switchVTabAdmin(name) {
+    vTabAdminActual = name;
+    ['historial','comparar'].forEach(t => {
+      const el  = document.getElementById('vtab-' + t);
+      const btn = document.getElementById('vtab-btn-' + t);
+      if (!el || !btn) return;
+      const isActive = t === name;
+      el.style.display  = isActive ? (t === 'historial' ? 'block' : 'flex') : 'none';
+      btn.classList.toggle('active', isActive);
+    });
+
+    // El modal cambia de tamaño según la pestaña
+    const box = document.getElementById('modal-versiones-box');
+    if (box) {
+      if (name === 'comparar') {
+        box.style.height   = '96vh';
+        box.style.width    = '98vw';
+        box.style.maxWidth = '1600px';
+      } else {
+        box.style.height   = 'auto';
+        box.style.width    = '680px';
+        box.style.maxWidth = '96vw';
+      }
+    }
+
+    if (name === 'comparar') intentarCompararAdmin();
+  }
+
+  async function abrirModalVersiones(idActividad, nombre) {
+    versionActividadActual = idActividad;
+    versionesActuales      = [];
+
+    document.getElementById('modal-versiones-actividad-nombre').textContent = nombre;
+    document.getElementById('version-id-actividad').value = idActividad;
+    document.getElementById('version-numero').value    = '';
+    document.getElementById('version-descripcion').value = '';
+    document.getElementById('version-contenido-texto').value = '';
+    document.getElementById('comparar-visor').style.display = 'none';
+    document.getElementById('comparar-seleccion-msg').style.display = 'block';
+
+    switchVTabAdmin('historial');
+    const box = document.getElementById('modal-versiones-box');
+    if (box) { box.style.width = '680px'; box.style.maxWidth = '96vw'; box.style.height = 'auto'; }
+
+    // Resetear análisis IA
+    const iaContenido = document.getElementById('ia-contenido');
+    if (iaContenido) iaContenido.innerHTML = '';
+
+    await cargarHistorialVersiones(idActividad);
+    openModal('modal-versiones');
+  }
+
+  async function cargarHistorialVersiones(idActividad) {
+    const tbody = document.getElementById('versiones-tabla-body');
+    const vacio = document.getElementById('versiones-vacio');
+    tbody.innerHTML = '';
+    vacio.style.display = 'none';
+    versionesActuales = [];
+
+    try {
+      const res  = await fetch(`/api/actividades/${idActividad}/versiones`);
+      const data = await res.json();
+
+      if (data.success && data.versiones && data.versiones.length > 0) {
+        versionesActuales = data.versiones;
+
+        data.versiones.forEach(v => {
+          const mime      = v.contenido_mime || '';
+          const tieneArch = !!(v.archivo_nombre);
+          const tipoIcono = getTipoIconoAdmin(mime, v.archivo_nombre);
+          const tipoLabel = getTipoLabelAdmin(mime, v.archivo_nombre);
+
+          const tr = document.createElement('tr');
+          tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+          tr.innerHTML = `
+            <td style="padding:0.6rem 0.4rem; text-align:center;">
+              <input type="checkbox" class="diff-checkbox" value="${v.id_version}" onchange="manejarCambioCheckboxAdmin(this)">
+            </td>
+            <td style="padding:0.6rem 0.4rem;">
+              <span class="badge badge-blue" style="font-size:0.7rem; font-weight:700;">v${v.version_numero}</span>
+              ${v.commit_sha && PROYECTO_GITHUB_REPO
+                ? `<a href="https://github.com/${PROYECTO_GITHUB_REPO}/commit/${v.commit_sha}" target="_blank"
+                     style="margin-left:0.3rem; font-size:0.68rem; color:#38bdf8; text-decoration:none; display:inline-flex; align-items:center; gap:2px; vertical-align:middle;">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/></svg> ${v.commit_sha.substring(0,7)}</a>`
+                : ''}
+            </td>
+            <td style="padding:0.6rem 0.4rem; color:var(--text-secondary);">${v.descripcion_cambio || 'Sin descripción'}</td>
+            <td style="padding:0.6rem 0.4rem; font-size:0.8rem;">${v.autor_nombre ? v.autor_nombre.split(' ')[0] : '—'}</td>
+            <td style="padding:0.6rem 0.4rem; color:var(--text-muted); font-size:0.75rem;">
+              ${new Date(v.fecha_version).toLocaleDateString('es-PE', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}
+            </td>
+            <td style="padding:0.6rem 0.4rem; font-size:0.75rem;">
+              ${tieneArch ? `<span title="${mime}">${tipoIcono} ${tipoLabel}</span>` : '<span style="color:var(--text-muted);">Texto</span>'}
+            </td>
+            <td style="padding:0.6rem 0.4rem; text-align:right;">
+              ${tieneArch
+                ? `<a href="/api/versiones/${v.id_version}/archivo" target="_blank"
+                     class="btn btn-primary" style="padding:0.25rem 0.5rem; font-size:0.68rem; text-decoration:none; display:inline-flex; align-items:center; gap:2px; float:right;">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg> Ver</a>`
+                : '<span style="color:var(--text-muted); font-size:0.73rem;">—</span>'}
+            </td>`;
+          tbody.appendChild(tr);
+        });
+      } else {
+        vacio.style.display = 'block';
+      }
+    } catch (err) {
+      console.error('Error al cargar versiones:', err);
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--red); padding:1rem;">Error al cargar el historial.</td></tr>';
+    }
+  }
+
+  function getTipoIconoAdmin(mime, nombre, size = 14) {
+    if (!mime && !nombre) return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; display:inline-block;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+    const ext = (nombre || '').split('.').pop().toLowerCase();
+    if (mime.includes('pdf') || ext === 'pdf')
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="var(--red, #ef4444)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; display:inline-block;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M16 13a2 2 0 0 0-2-2H8v10h2v-4h4a2 2 0 0 0 2-2z"/></svg>`;
+    if (mime.includes('word') || ['doc','docx'].includes(ext))
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; display:inline-block;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+    if (mime.includes('spreadsheet') || mime.includes('excel') || ['xls','xlsx'].includes(ext))
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; display:inline-block;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+    if (mime.includes('text') || ['txt','md','csv'].includes(ext))
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; display:inline-block;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; display:inline-block;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+  }
+
+  function getTipoLabelAdmin(mime, nombre) {
+    if (!mime && !nombre) return 'Archivo';
+    const ext = (nombre || '').split('.').pop().toLowerCase();
+    if (mime.includes('pdf') || ext === 'pdf')                         return 'PDF';
+    if (mime.includes('word') || ext === 'docx')                       return 'Word';
+    if (ext === 'doc')                                                  return 'Word (doc)';
+    if (mime.includes('spreadsheet') || ext === 'xlsx')                return 'Excel';
+    if (ext === 'xls')                                                  return 'Excel (xls)';
+    if (mime.includes('presentation') || ['ppt','pptx'].includes(ext)) return 'PowerPoint';
+    if (mime.includes('text') || ['txt','md','csv'].includes(ext))    return 'Texto';
+    return ext.toUpperCase() || 'Archivo';
+  }
+
+  function toggleAllVersionCheckboxes(masterCb) {
+    document.querySelectorAll('.diff-checkbox').forEach(cb => { cb.checked = masterCb.checked; });
+    const checked = document.querySelectorAll('.diff-checkbox:checked');
+    if (checked.length > 2) {
+      masterCb.checked = false;
+      document.querySelectorAll('.diff-checkbox').forEach(cb => cb.checked = false);
+      alert('Solo puedes seleccionar un máximo de 2 versiones para comparar.');
+    }
+  }
+
+  function manejarCambioCheckboxAdmin(cb) {
+    const checked = document.querySelectorAll('.diff-checkbox:checked');
+    if (checked.length > 2) {
+      cb.checked = false;
+      alert('Solo puedes seleccionar un máximo de 2 versiones para comparar.');
+    }
+  }
+
+  // ─── COMPARACIÓN ADMIN ───────────────────────────────────────────────────────
+  function intentarCompararAdmin() {
+    const checkboxes = document.querySelectorAll('.diff-checkbox:checked');
+    if (checkboxes.length !== 2) {
+      document.getElementById('comparar-seleccion-msg').style.display = 'block';
+      document.getElementById('comparar-visor').style.display = 'none';
+      return;
+    }
+    const idV1 = parseInt(checkboxes[0].value);
+    const idV2 = parseInt(checkboxes[1].value);
+    const v1   = versionesActuales.find(v => v.id_version === idV1);
+    const v2   = versionesActuales.find(v => v.id_version === idV2);
+    if (!v1 || !v2) return;
+
+    const antigua = new Date(v1.fecha_version) < new Date(v2.fecha_version) ? v1 : v2;
+    const nueva   = antigua === v1 ? v2 : v1;
+
+    document.getElementById('comparar-header-v1').innerHTML = `<span class="badge badge-red" style="font-size:0.7rem; font-weight:700; margin-right:0.4rem;">v${antigua.version_numero}</span> ${antigua.descripcion_cambio || 'Sin desc.'}`;
+    document.getElementById('comparar-header-v2').innerHTML = `<span class="badge badge-teal" style="font-size:0.7rem; font-weight:700; margin-right:0.4rem;">v${nueva.version_numero}</span> ${nueva.descripcion_cambio || 'Sin desc.'}`;
+
+    document.getElementById('comparar-seleccion-msg').style.display = 'none';
+    document.getElementById('comparar-visor').style.display = 'flex';
+
+    const iaContenido = document.getElementById('ia-contenido');
+    if (iaContenido) iaContenido.innerHTML = '';
+
+    cargarVisorDocumentoAdmin('visor-v1', antigua);
+    cargarVisorDocumentoAdmin('visor-v2', nueva);
+    generarDiffTextoAdmin(antigua, nueva);
+    setVistaComparacionAdmin('sidebyside');
+
+    const mime = antigua.contenido_mime || nueva.contenido_mime || '';
+    const nombre = antigua.archivo_nombre || nueva.archivo_nombre || '';
+    document.getElementById('comparar-tipo-badge').innerHTML =
+      `Tipo detectado: ${getTipoIconoAdmin(mime, nombre)} ${getTipoLabelAdmin(mime, nombre)}`;
+  }
+
+  async function cargarVisorDocumentoAdmin(panelId, version) {
+    const panel = document.getElementById(panelId);
+    panel.innerHTML = '<div style="padding:1rem; color:var(--text-muted); font-size:0.8rem;">Cargando...</div>';
+
+    const mime   = version.contenido_mime || '';
+    const nombre = version.archivo_nombre || '';
+    const ext    = nombre.split('.').pop().toLowerCase();
+
+    // PDF
+    if (mime.includes('pdf') || ext === 'pdf') {
+      panel.innerHTML = `<iframe src="/api/versiones/${version.id_version}/archivo"
+        style="width:100%; height:100%; min-height:600px; border:none; display:block;"
+        title="v${version.version_numero}"></iframe>`;
+      return;
+    }
+
+    // Word (.docx)
+    if (mime.includes('word') || ext === 'docx') {
+      try {
+        const resp   = await fetch(`/api/versiones/${version.id_version}/archivo`);
+        const buffer = await resp.arrayBuffer();
+        const result = await mammoth.convertToHtml({ arrayBuffer: buffer });
+        panel.innerHTML = `<div style="padding:1rem; font-size:0.82rem; line-height:1.6; color:var(--text-primary);">${result.value}</div>`;
+      } catch (e) {
+        panel.innerHTML = `<div style="padding:1rem; color:var(--red); font-size:0.8rem;">No se pudo renderizar el Word: ${e.message}</div>`;
+      }
+      return;
+    }
+
+    // Excel (.xlsx)
+    if (mime.includes('spreadsheet') || mime.includes('excel') || ['xls','xlsx'].includes(ext)) {
+      try {
+        const resp   = await fetch(`/api/versiones/${version.id_version}/archivo`);
+        const buffer = await resp.arrayBuffer();
+        const wb     = XLSX.read(buffer, { type: 'array' });
+        const ws     = wb.Sheets[wb.SheetNames[0]];
+        const html   = XLSX.utils.sheet_to_html(ws, { editable: false });
+        panel.innerHTML = `<div style="padding:0.5rem; overflow:auto;">
+          <style>#${panelId} table { border-collapse:collapse; font-size:0.75rem; width:100%; }
+          #${panelId} td, #${panelId} th { border:1px solid var(--border); padding:0.25rem 0.5rem; }
+          #${panelId} tr:first-child td { background:var(--bg-tertiary); font-weight:600; }</style>
+          ${html}</div>`;
+      } catch (e) {
+        panel.innerHTML = `<div style="padding:1rem; color:var(--red); font-size:0.8rem;">No se pudo renderizar el Excel: ${e.message}</div>`;
+      }
+      return;
+    }
+
+    // Texto / código (fallback)
+    if (version.contenido_texto) {
+      panel.innerHTML = `<pre style="padding:1rem; font-size:0.78rem; margin:0; white-space:pre-wrap; color:var(--text-secondary); overflow:auto;">${
+        version.contenido_texto.replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      }</pre>`;
+      return;
+    }
+
+    // Archivo sin visor
+    if (version.archivo_nombre) {
+      panel.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted);">
+        <div style="margin-bottom:0.75rem; display:flex; justify-content:center;">${getTipoIconoAdmin(mime, nombre, 48)}</div>
+        <p style="font-size:0.82rem; margin-bottom:1rem;">Vista previa no disponible para este tipo de archivo.</p>
+        <a href="/api/versiones/${version.id_version}/archivo" download="${nombre}"
+           class="btn btn-primary" style="font-size:0.8rem; text-decoration:none; display:inline-flex; align-items:center; gap:0.35rem;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Descargar v${version.version_numero}
+        </a></div>`;
+      return;
+    }
+
+    panel.innerHTML = '<div style="padding:1rem; color:var(--text-muted); font-size:0.8rem; text-align:center;">Sin contenido disponible.</div>';
+  }
+
+  function generarDiffTextoAdmin(antigua, nueva) {
+    const text1  = antigua.contenido_texto || '';
+    const text2  = nueva.contenido_texto   || '';
+    const diffEl = document.getElementById('diff-contenido');
+
+    if (!text1.trim() && !text2.trim()) {
+      diffEl.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:2rem; font-size:0.82rem;">Ninguna versión tiene contenido de texto para comparar.<br>El diff de texto solo funciona cuando se pega contenido en el campo de texto al subir la versión.</div>';
+      return;
+    }
+
+    const diff = Diff.diffLines(text1, text2);
+    const pre  = document.createElement('pre');
+    pre.style.margin = '0';
+
+    const header = document.createElement('div');
+    header.style.cssText = 'border-bottom:1px solid var(--border-subtle);padding-bottom:0.5rem;margin-bottom:0.5rem;font-weight:bold;font-size:0.8rem;color:var(--text-primary);';
+    header.innerHTML = `Comparando <span style="color:#f85149;">v${antigua.version_numero}</span> → <span style="color:#3fb950;">v${nueva.version_numero}</span>`;
+    pre.appendChild(header);
+
+    let totalAdd = 0, totalDel = 0;
+    diff.forEach(part => {
+      let val = part.value;
+      if (val.endsWith('\n')) val = val.slice(0, -1);
+      val.split('\n').forEach(line => {
+        const span = document.createElement('span');
+        span.style.display = 'block';
+        span.style.padding  = '0.1rem 0.5rem';
+        if (part.added) {
+          span.style.background = 'rgba(46,164,79,0.15)';
+          span.style.color      = '#3fb950';
+          span.style.borderLeft = '3px solid #2ea44f';
+          span.textContent = `+ ${line}`;
+          totalAdd++;
+        } else if (part.removed) {
+          span.style.background = 'rgba(248,81,73,0.15)';
+          span.style.color      = '#f85149';
+          span.style.borderLeft = '3px solid #f85149';
+          span.textContent = `- ${line}`;
+          totalDel++;
+        } else {
+          span.style.color   = 'var(--text-muted)';
+          span.style.opacity = '0.65';
+          span.textContent   = `  ${line}`;
+        }
+        pre.appendChild(span);
+      });
+    });
+
+    const summary = document.createElement('div');
+    summary.style.cssText = 'margin-top:0.75rem; padding-top:0.5rem; border-top:1px solid var(--border-subtle); font-size:0.75rem; color:var(--text-muted);';
+    summary.innerHTML = `<span style="color:#3fb950;">+${totalAdd} líneas agregadas</span> &nbsp; <span style="color:#f85149;">-${totalDel} líneas eliminadas</span>`;
+    pre.appendChild(summary);
+
+    diffEl.innerHTML = '';
+    diffEl.appendChild(pre);
+  }
+
+  function setVistaComparacionAdmin(vista) {
+    vistaComparacionAdmin = vista;
+    const sbs  = document.getElementById('panel-sidebyside');
+    const diff = document.getElementById('panel-diff');
+    const ia   = document.getElementById('panel-ia');
+    const btnS = document.getElementById('vbtn-sidebyside');
+    const btnD = document.getElementById('vbtn-diff');
+    const btnI = document.getElementById('vbtn-ia');
+
+    if (!sbs || !diff || !ia) return;
+
+    sbs.style.display  = vista === 'sidebyside' ? 'grid' : 'none';
+    diff.style.display = vista === 'diff' ? 'block' : 'none';
+    ia.style.display   = vista === 'ia' ? 'block' : 'none';
+
+    if (btnS) btnS.style.border = vista === 'sidebyside' ? '1px solid var(--accent)' : '';
+    if (btnD) btnD.style.border = vista === 'diff' ? '1px solid var(--accent)' : '';
+    if (btnI) btnI.style.border = vista === 'ia' ? '1px solid var(--accent)' : '';
+
+    if (vista === 'ia') ejecutarComparacionIAAdmin();
+  }
+
+  async function ejecutarComparacionIAAdmin() {
+    const contenidoDiv = document.getElementById('ia-contenido');
+    const loadingDiv   = document.getElementById('ia-loading');
+    if (!contenidoDiv || !loadingDiv) return;
+    if (contenidoDiv.innerHTML.trim() !== '') return;
+
+    const checkboxes = document.querySelectorAll('.diff-checkbox:checked');
+    if (checkboxes.length !== 2) {
+      contenidoDiv.innerHTML = '<div style="padding:2rem; text-align:center; color:var(--text-muted);">Selecciona exactamente 2 versiones para analizar con IA.</div>';
+      return;
+    }
+
+    const idV1 = parseInt(checkboxes[0].value);
+    const idV2 = parseInt(checkboxes[1].value);
+
+    loadingDiv.style.display    = 'block';
+    contenidoDiv.style.display  = 'none';
+
+    try {
+      const res = await fetch('/api/versiones/comparar-ia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idV1, idV2 })
+      });
+      const data = await res.json();
+
+      if (data.success && data.analysis) {
+        contenidoDiv.innerHTML = marked.parse(data.analysis);
+      } else {
+        contenidoDiv.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--red);">
+          <p style="font-weight:600;">No se pudo realizar el análisis con IA</p>
+          <p style="font-size:0.8rem; color:var(--text-muted);">${data.error || 'Error inesperado.'}</p></div>`;
+      }
+    } catch (err) {
+      contenidoDiv.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--red);">
+        <p style="font-weight:600;">Error de conexión</p></div>`;
+    } finally {
+      loadingDiv.style.display   = 'none';
+      contenidoDiv.style.display = 'block';
+    }
+  }
+
+</script>
