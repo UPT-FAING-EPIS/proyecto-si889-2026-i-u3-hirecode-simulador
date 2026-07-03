@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resolver Reto - <%= reto.titulo %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .editor-container {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .left-panel { flex: 1; display: flex; flex-direction: column; gap: 16px; }
+        .right-panel { flex: 1; display: flex; flex-direction: column; gap: 16px; }
+        
+        .header-meta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .btn-group {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/header') %>
+
+    <div class="container">
+        <div class="editor-container">
+            <div class="left-panel">
+                <div class="card banco-detalles glass-effect">
+                    <a href="/retos" class="btn-volver">← Volver a Retos</a>
+                    
+                    <div class="header-meta">
+                        <span class="badge badge-<%= reto.dificultad.replace('í', 'i') %>"><%= reto.dificultad %></span>
+                        <span class="badge badge-Exitoso"><%= reto.puntos %> Puntos</span>
+                        <span class="badge badge-Medio">Tus intentos: <%= typeof intentosTotales !== 'undefined' ? intentosTotales : 0 %></span>
+                    </div>
+                    
+                    <form action="/retos/calificar" method="POST" class="auth-card" style="padding: 12px; margin-bottom: 20px; display: inline-block;">
+                        <input type="hidden" name="reto_id" value="<%= reto.id %>">
+                        <label style="font-weight:bold; margin-right:10px; font-size:0.9em; display: inline-block;">Calificar reto:</label>
+                        <select name="estrellas" style="width: auto; padding: 4px 8px; margin-right: 10px;">
+                            <option value="5">5 ★ Excelente</option>
+                            <option value="4">4 ★ Muy bueno</option>
+                            <option value="3">3 ★ Bueno</option>
+                            <option value="2">2 ★ Regular</option>
+                            <option value="1">1 ★ Malo</option>
+                        </select>
+                        <button type="submit" class="btn" style="width: auto; padding: 4px 12px;">Votar</button>
+                    </form>
+                    
+                    <h2><%= reto.titulo %></h2>
+                    <p class="descripcion" style="font-size: 14px;"><%= reto.enunciado %></p>
+                    
+                    <% if (reto.pista) { %>
+                        <button class="btn-secondary" onclick="togglePista()">Ver Pista</button>
+                        <div id="pista-box" class="casos-container" style="display: none; margin-top: 10px;">
+                            <strong>Pista:</strong> <%= reto.pista %>
+                        </div>
+                    <% } %>
+
+                    <hr>
+                    
+                    <h3>Casos de Prueba</h3>
+                    <div class="test-cases-list">
+                        <% if(typeof casosPrueba !== 'undefined' && casosPrueba && casosPrueba.length > 0) { %>
+                            <% const visibles = casosPrueba.filter(c => c.es_visible === 1); %>
+                            <% if (visibles.length > 0) { %>
+                                <% visibles.forEach((test, idx) => { %>
+                                    <div class="test-case-item">
+                                        <strong>Caso Visible #<%= idx + 1 %>:</strong><br>
+                                        Input: <code class="test-input-code"><%= test.input %></code><br>
+                                        Output Esperado: <code class="test-output-code"><%= test.output_esperado %></code>
+                                    </div>
+                                <% }) %>
+                            <% } else { %>
+                                <div class="test-case-item">No hay casos visibles parametrizados.</div>
+                            <% } %>
+                        <% } else { %>
+                            <!-- Retrocompatibilidad si aún no hay insertados -->
+                            <div class="test-case-item">
+                                <strong>Ejemplo:</strong><br>
+                                Input: <code><%= reto.test_input %></code><br>
+                                Output Esperado: <code><%= reto.test_output %></code>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <div class="leaderboard glass-effect" style="padding: 20px; border-radius: 10px; border: 1px solid #1c1c1c; margin-top: 20px;">
+                    <h3>Top 5 Soluciones Exitosas</h3>
+                    <ul>
+                        <% if(leaderboard.length === 0) { %>
+                            <li>Aún nadie ha resuelto este reto. ¡Sé el primero!</li>
+                        <% } %>
+                        <% leaderboard.forEach((l, i) => { %>
+                            <li><strong>#<%= i+1 %></strong> <%= l.nombre %> - <%= new Date(l.fecha).toLocaleString() %></li>
+                        <% }) %>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="right-panel">                <div id="timer-container" style="background: #1a1a1c; padding: 12px 15px; border-radius: 8px; border: 1px solid #333; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <span style="font-weight: bold; color: #f1f1f1; font-size: 0.9em;">Tiempo Restante:</span>
+                    <span id="countdown" style="font-family: monospace; font-size: 1.4em; color: #22c55e; font-weight: bold; letter-spacing: 1px;">--:--</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h3 style="margin: 0;">Tu Código (<%= reto.lenguaje %>)</h3>
+                    <div class="btn-group" style="margin: 0;">
+                        <button class="btn-run" onclick="runCode()">Ejecutar Pruebas</button>
+                        <button class="btn-reset" onclick="resetCode()">Resetear</button>
+                    </div>
+                </div>
+                <!-- Contenedor de Monaco Editor -->
+                <div id="editor-container" style="flex: 1; min-height: 350px;"></div>
+
+                <div id="consoleOutput" class="console" style="margin-top: 10px; min-height: 120px;">>_ Esperando ejecución...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts de Monaco Editor -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.41.0/min/vs/loader.min.js"></script>
+
+    <!-- Lógica de ejecución evaluador múltiple -->
+    <script>
+        const retoId = <%= reto.id %>;        
+        // --- LOGICA DEL TEMPORIZADOR ---
+        const difText = "<%= reto.dificultad %>".toUpperCase();
+        let tiempoRestante = 600; // 10 minutos (Difícil por defecto)
+        
+        if (difText.includes('F')) {
+            tiempoRestante = 60; // 1 min (Fácil)
+        } else if (difText.includes('M')) {
+            tiempoRestante = 300; // 5 min (Medio)
+        }
+        
+        const countdownEl = document.getElementById('countdown');
+        const countInterval = setInterval(() => {
+            if (tiempoRestante <= 0) {
+                clearInterval(countInterval);
+                countdownEl.style.color = '#ef4444';
+                countdownEl.innerText = "00:00";
+                
+                // Bloquear UI
+                window.editor.updateOptions({ readOnly: true });
+                const runBtn = document.querySelector('.btn-run');
+                if (runBtn) { runBtn.disabled = true; runBtn.style.opacity = '0.5'; }
+                
+                // Mostrar alerta y redirigir
+                setTimeout(() => {
+                    showToast('¡Tiempo agotado! No pudiste resolver el reto a tiempo.', 'warning');
+                    setTimeout(() => {
+                        window.location.href = '/retos';
+                    }, 3000);
+                }, 100);
+            } else {
+                const m = Math.floor(tiempoRestante / 60).toString().padStart(2, '0');
+                const s = (tiempoRestante % 60).toString().padStart(2, '0');
+                countdownEl.innerText = `${m}:${s}`;
+                
+                // Cambios de color warning y danger
+                if (tiempoRestante <= 15) {
+                    countdownEl.style.color = '#ef4444';
+                } else if (tiempoRestante <= 60) {
+                    countdownEl.style.color = '#eab308';
+                }
+                
+                tiempoRestante--;
+            }
+        }, 1000);
+        // --- FIN DEL TEMPORIZADOR ---
+        // Inyectamos el string de código inicial original
+        const rawInitialCode = <%- JSON.stringify(reto.codigo_inicial || '') %>;
+        
+        // Array de casos de prueba extraídos desde la Base de Datos
+        const casosPrueba = <%- JSON.stringify(casosPrueba || []) %>;
+        
+        // Variables de retrocompatibilidad
+        const defaultInput = <%- JSON.stringify(reto.test_input || '') %>;
+        const defaultOutput = <%- JSON.stringify(reto.test_output || '') %>;
+
+        function togglePista() {
+            const x = document.getElementById("pista-box");
+            x.style.display = (x.style.display === "block") ? "none" : "block";
+        }
+
+        function resetCode() {
+            if (confirm("¿Estás seguro que deseas restablecer tu código? Perderás los cambios manuales.")) {
+                window.editor.setValue(rawInitialCode);
+                document.getElementById('consoleOutput').innerHTML = ">_ Código restablecido.\n";
+            }
+        }
+
+        async function runCode() {
+            const code = window.editor.getValue();
+            const consoleDiv = document.getElementById('consoleOutput');
+            const btnRun = document.querySelector('.btn-run');
+            
+            consoleDiv.innerHTML = ">_ Enviando código al servidor para evaluación segura...\n";
+            
+            // Iniciar animaciones de carga
+            btnRun.disabled = true;
+            btnRun.classList.add('loading');
+            consoleDiv.classList.add('skeleton-loading');
+
+            try {
+                const response = await fetch('/retos/evaluar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        reto_id: retoId,
+                        codigo: code
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.error) {
+                    consoleDiv.innerHTML += `\nERROR: ${result.error}\n`;
+                    if (result.details) consoleDiv.innerHTML += `Detalles: ${result.details}\n`;
+                } else {
+                    consoleDiv.innerHTML += result.executionOutput;
+                    
+                    if (result.allTestsPassed) {
+                        setTimeout(() => { window.location.reload(); }, 2000);
+                    }
+                }
+            } catch (err) {
+                consoleDiv.innerHTML += `\nERROR AL COMUNICARSE CON EL SERVIDOR:\n${err.message}`;
+            } finally {
+                // Detener animaciones
+                btnRun.disabled = false;
+                btnRun.classList.remove('loading');
+                consoleDiv.classList.remove('skeleton-loading');
+            }
+        }
+
+        // --- INICIALIZAR MONACO EDITOR ---
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.41.0/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            
+            // Mapeo simple de lenguajes para Monaco
+            const languageMap = {
+                "JavaScript": "javascript",
+                "Python": "python",
+                "Java": "java",
+                "C++": "cpp",
+                "C#": "csharp"
+            };
+            const lang = languageMap["<%= reto.lenguaje %>"] || "javascript";
+
+            const initialTheme = localStorage.getItem('theme') === 'light' ? 'vs' : 'vs-dark';
+
+            window.editor = monaco.editor.create(document.getElementById('editor-container'), {
+                value: rawInitialCode,
+                language: lang,
+                theme: initialTheme,
+                automaticLayout: true,
+                minimap: { enabled: true },
+                fontSize: 14,
+                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                roundedSelection: true,
+                scrollBeyondLastLine: false,
+                padding: { top: 16 }
+            });
+
+            // Escuchar cambios de tema globales
+            window.addEventListener('themeChanged', (e) => {
+                monaco.editor.setTheme(e.detail.isLight ? 'vs' : 'vs-dark');
+            });
+        });
+    </script>
+</body>
+</html>
